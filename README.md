@@ -1,58 +1,86 @@
 # E-commerce QA Portfolio
 
-![CI](https://github.com/<tvuj-github-username>/ecommerce-qa-portfolio/actions/workflows/ci.yml/badge.svg)
+![CI](https://github.com/<your-github-username>/ecommerce-qa-portfolio/actions/workflows/ci.yml/badge.svg)
 
-## O projektu
+End-to-end QA portfolio demonstrating risk-based test design, manual test cases, UI
+automation (Playwright), API testing (Postman/Newman), and CI execution, using a public
+e-commerce application as the target.
 
-Ukázkový QA/testovací projekt postavený nad veřejně dostupným demo e-shopem
-[AutomationExercise](https://automationexercise.com). Cílem projektu je ukázat kompletní
-testovací proces od analýzy a návrhu testovacích scénářů, přes manuální test case,
-až po automatizované UI testy (Playwright) a API testy (Postman/Newman), zapojené
-do CI pipeline na GitHubu.
+## Highlights
 
-Projekt vznikl jako doplněk k praxi v manuálním testování a testovací strategii –
-zaměřuje se hlavně na prohloubení automatizace a demonstraci end-to-end přístupu
-k zajištění kvality.
+- Risk-based test strategy (39 identified risks, prioritised by impact × likelihood)
+- 35+ manual test cases across 5 modules, each traceable to a specific risk
+- Playwright UI automation with Page Object Model
+- Postman/Newman API test suite
+- GitHub Actions CI pipeline
+- Documented exploratory testing findings, including one confirmed candidate defect
+- Explicit "tests intentionally not automated" section with reasoning
 
-## Testovaná aplikace
+```
+Risk Analysis → Test Strategy → Test Cases → Automation → CI → Reports
+```
+
+## What This Demonstrates
+
+- UI functional testing, including negative and boundary scenarios
+- API contract testing (status codes, error handling, edge-case parameter values)
+- Risk-based prioritisation and scope decisions
+- Test data management for a shared, unstable public environment
+- Exploratory testing to establish behaviour baselines before automating
+- Business-outcome assertions rather than implementation-detail checks
+
+## Application Under Test
 
 - **Web:** https://automationexercise.com
 - **API:** https://automationexercise.com/api_list
 
-## Co projekt pokrývá
+Scope: registration/login, product search & filtering, cart, checkout, and the API layer
+(createAccount, verifyLogin, searchProduct, productsList). Full scope decisions and
+rationale: [`docs/test-strategy.md`](./docs/test-strategy.md).
 
-- **Registrace a přihlášení** – včetně negativních scénářů (duplicitní e-mail, špatné heslo)
-- **Vyhledávání a filtrování produktů** – podle kategorie a značky
-- **Košík** – přidání, úprava množství, odebrání položek
-- **Checkout flow** – zadání adresy, dokončení objednávky
-- **API vrstva** – createAccount, verifyLogin, searchProduct, productsList
+The project intentionally focuses on business-critical workflows instead of exhaustive
+coverage of every application feature.
 
-Podrobné testovací scénáře a test case najdeš ve složce [`docs/test-cases`](./docs/test-cases).
+## Known Limitations
 
-## Tech stack
+- Public demo application, shared with other users — no SLA, no dedicated test environment.
+- No access to source code or backend — black-box testing only.
+- Test data (catalogue, product IDs) may change without notice.
 
-| Vrstva | Nástroj |
+## Tech Stack
+
+| Layer | Tool |
 |---|---|
-| UI automatizace | Playwright (TypeScript) |
-| API testy | Postman / Newman |
+| UI automation | Playwright (TypeScript) |
+| API testing | Postman / Newman |
 | CI/CD | GitHub Actions |
-| Testovací dokumentace | Markdown |
+| Documentation | Markdown |
 
-## Struktura repozitáře
+## Repository Structure
 
 ```
 ecommerce-qa-portfolio/
 ├── docs/
-│   ├── test-strategy.md       # testovací strategie a přístup
-│   └── test-cases/            # testovací scénáře a test case po modulech
-├── postman/                   # API kolekce a prostředí
-├── playwright/                # UI automatizace (testy + Page Object Model)
-└── .github/workflows/         # CI pipeline
+│   ├── test-strategy.md        # test strategy and approach
+│   ├── risk-analysis.md        # risk-based analysis (39 risks)
+│   ├── coverage-matrix.md      # risk → test case traceability
+│   ├── automation-notes.md     # Playwright implementation decisions
+│   ├── tests-not-automated.md  # scenarios documented but not automated, and why
+│   └── test-cases/             # test cases by module
+├── postman/                    # API collection and environments
+├── playwright/                 # UI automation (tests + Page Object Model)
+└── .github/workflows/          # CI pipeline
 ```
 
-## Jak spustit testy lokálně
+## Running Tests Locally
 
-### Playwright (UI testy)
+### Requirements
+
+- Node.js 22+
+- npm
+- Git
+
+### Playwright (UI tests)
 
 ```bash
 cd playwright
@@ -60,7 +88,7 @@ npm install
 npx playwright test
 ```
 
-### Postman / Newman (API testy)
+### Postman / Newman (API tests)
 
 ```bash
 cd postman
@@ -68,10 +96,7 @@ npm install -g newman
 newman run ecommerce-api.postman_collection.json -e environments/production.postman_environment.json
 ```
 
-## Autor
+## Author
 
-**Tomáš Koudelka** – Senior QA Tester / Test Analyst
+**Tomáš Koudelka**
 [LinkedIn](https://linkedin.com/in/tomas-koudelka-a95aab88/)
-
-Tento projekt vznikl jako praktická ukázka k profilu a jako prostor pro prohloubení
-znalostí testovací automatizace nad rámec dosavadní praxe.
