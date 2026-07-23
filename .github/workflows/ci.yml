@@ -1,0 +1,62 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  api-tests:
+    name: API tests (Postman/Newman)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Install Newman
+        run: npm install -g newman
+
+      - name: Health check (environment availability)
+        id: health_check
+        run: |
+          STATUS=$(curl -s -o /dev/null -w "%{http_code}" https://automationexercise.com/api/productsList)
+          if [ "$STATUS" != "200" ] && [ "$STATUS" != "302" ]; then
+            echo "Application is unreachable (HTTP $STATUS). Skipping the rest of the suite."
+            echo "skip=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "skip=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      # The app is known to be flaky (see docs/automation-notes.md) - a single 302 doesn't
+      # mean it's down, so we retry the whole collection up to 3 times rather than failing
+      # the build on the first transient redirect. Each Postman test already distinguishes
+      # an environment hiccup (302) from a real assertion failure in its own report.
+      - name: Run API test collection (with retry on environment instability)
+        if: steps.health_check.outputs.skip == 'false'
+        working-directory: postman
+        run: |
+          for attempt in 1 2 3; do
+            echo "Attempt $attempt..."
+            if newman run ecommerce-api.postman_collection.json \
+                -e environments/production.postman_environment.json \
+                --delay-request 500 \
+                --reporters cli,junit \
+                --reporter-junit-export newman-report.xml; then
+              echo "Passed on attempt $attempt."
+              exit 0
+            fi
+          done
+          echo "Failed after 3 attempts."
+          exit 1
+
+      - name: Upload Newman report
+        if: always() && steps.health_check.outputs.skip == 'false'
+        uses: actions/upload-artifact@v4
+        with:
+          name: newman-report
+          path: postman/newman-report.xml

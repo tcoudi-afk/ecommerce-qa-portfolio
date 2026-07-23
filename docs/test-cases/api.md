@@ -82,8 +82,9 @@ Source of truth: `automationexercise.com/api_list`.
 - **Risk:** R-32
 - **Endpoint:** `POST /api/searchProduct`
 - **Data:** `search_product=dress`
-- **Expected Result:** HTTP 200; returned products match the search term (compared against
-  an expected set computed from `productsList`, same principle as TC-SEARCH-001).
+- **Expected Result:** HTTP 200; returned products match the search term **by name or
+  category** (confirmed via API exploration — not name-only; same principle as
+  TC-SEARCH-001).
 - **Tags:** `@functional` `@high` `@api`
 
 ## TC-API-010 — searchProduct without the required parameter
@@ -144,8 +145,12 @@ Source of truth: `automationexercise.com/api_list`.
 - **Endpoint:** `POST /api/verifyLogin` (representative; same principle applies to other
   endpoints with required parameters)
 - **Data (data-driven):** `email=""`, `email` omitted entirely, `email="   "`.
-- **Expected Result:** Each case returns a consistent, deliberate response (e.g. all three
-  return 400) — documented explicitly, not assumed to behave the same.
+- **Expected Result:** **Confirmed:** the three cases are *not* handled the same way.
+  `email` omitted entirely → HTTP 200, `responseCode: 400`, "email or password parameter is
+  missing" (the presence check fails). `email=""` and `email="   "` → HTTP 200,
+  `responseCode: 404`, "User not found!" (the value is treated as present, just not
+  matching any account — whitespace is not trimmed to empty first). This distinction is a
+  real, confirmed API contract detail, not an assumption.
 - **Tags:** `@boundary` `@medium` `@api`
 
 ## TC-API-016 — Unexpected extra parameters

@@ -5,8 +5,10 @@
 - **Objective:** Verify search returns exactly the products matching the term — no more, no
   fewer.
 - **Risk:** R-11, R-12
-- **Preconditions:** Catalogue state known via `GET productsList`; locally filter products
-  whose name contains the search term to compute the expected set.
+- **Preconditions:** Catalogue state known via `GET productsList`; locally compute the
+  expected set as every product whose **name or category** contains the search term
+  (confirmed via API exploration — matching is not name-only; e.g. searching `dress` also
+  returns products categorised as "Dress" whose name doesn't contain the word).
 - **Data:** A term matching a subset of the catalogue, e.g. `dress`.
 - **Steps:** Compute the expected set via the API. Enter the same term in the UI search.
   Compare the displayed set to the expected set.

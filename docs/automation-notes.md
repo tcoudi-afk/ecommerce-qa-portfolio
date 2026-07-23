@@ -39,6 +39,21 @@ stay technology-independent and readable outside a Playwright context.
 - TC-LOGIN-006, TC-LOGIN-007, TC-SEARCH-004, TC-API-011, and TC-API-015 are data-driven: one
   test definition parametrised over a list of inputs, not one test per value.
 
+## Environment Instability (API layer)
+
+Confirmed via repeated live requests (2026-07-22): roughly 40–60% of API calls to
+automationexercise.com return an HTTP 302 redirect to `/` instead of the documented JSON
+response — across all four endpoints, unrelated to request frequency (still occurs with 1s
+spacing between calls) or request validity. This is third-party infrastructure instability,
+not an application defect.
+
+**Pattern used in every Postman test script** to keep this from masquerading as a real test
+failure: check `pm.response.code === 302` first; if true, fail one clearly-labelled
+"API responded normally" assertion and skip the rest of that request's assertions, rather
+than letting several unrelated assertions fail with confusing, unrelated messages. Actual
+retry logic lives at the CI/Newman level, not duplicated into every test script — see
+`.github/workflows/ci.yml`.
+
 ## Confirmed Baselines (from manual exploration, 2026-07-22)
 
 These were established through live manual testing before writing the corresponding
@@ -50,3 +65,13 @@ automated assertions:
 - Search/category filters are not encoded in the URL and reset on reload.
 - `createAccount` with an existing email returns HTTP 400, `"Email already exists!"`, and does
   not affect the original account.
+- `searchProduct` matches on **name or category**, not name alone — confirmed by comparing
+  the live response against a locally-computed expected set from `productsList`. A test
+  asserting name-only matching (the natural first assumption) fails against real data.
+- `verifyLogin` treats an empty-string or whitespace-only `email` as *present but not
+  found* (`responseCode: 404`) — distinct from an entirely missing `email` parameter
+  (`responseCode: 400`). Whitespace is not trimmed before the lookup.
+- `productsList`'s `Allow` response header lists `DELETE, PUT, OPTIONS, GET, POST` as
+  supported methods, but DELETE and PUT both return the same `405` as any genuinely
+  unsupported method — the `Allow` header does not accurately reflect functional support.
+  OPTIONS returns endpoint metadata (name, accepted content types), not a 405.

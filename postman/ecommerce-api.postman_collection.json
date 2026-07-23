@@ -1,0 +1,1380 @@
+{
+	"info": {
+		"name": "E-commerce QA Portfolio - AutomationExercise API",
+		"description": "API test suite for automationexercise.com, covering createAccount, verifyLogin, productsList and searchProduct. See docs/test-cases/api.md and docs/risk-analysis.md for the underlying risk-based design.",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+	},
+	"item": [
+		{
+			"name": "Account",
+			"item": [
+				{
+					"name": "[Critical] POST createAccount - happy path",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/api/createAccount",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"createAccount"
+							]
+						},
+						"body": {
+							"mode": "urlencoded",
+							"urlencoded": [
+								{
+									"key": "name",
+									"value": "{{$randomFirstName}}",
+									"type": "text"
+								},
+								{
+									"key": "email",
+									"value": "{{test_email}}",
+									"type": "text"
+								},
+								{
+									"key": "password",
+									"value": "{{test_password}}",
+									"type": "text"
+								},
+								{
+									"key": "title",
+									"value": "Mr",
+									"type": "text"
+								},
+								{
+									"key": "birth_date",
+									"value": "1",
+									"type": "text"
+								},
+								{
+									"key": "birth_month",
+									"value": "1",
+									"type": "text"
+								},
+								{
+									"key": "birth_year",
+									"value": "1990",
+									"type": "text"
+								},
+								{
+									"key": "firstname",
+									"value": "QA",
+									"type": "text"
+								},
+								{
+									"key": "lastname",
+									"value": "Test",
+									"type": "text"
+								},
+								{
+									"key": "company",
+									"value": "Test",
+									"type": "text"
+								},
+								{
+									"key": "address1",
+									"value": "Test Street 1",
+									"type": "text"
+								},
+								{
+									"key": "address2",
+									"value": "",
+									"type": "text"
+								},
+								{
+									"key": "country",
+									"value": "Czech Republic",
+									"type": "text"
+								},
+								{
+									"key": "zipcode",
+									"value": "10000",
+									"type": "text"
+								},
+								{
+									"key": "state",
+									"value": "Praha",
+									"type": "text"
+								},
+								{
+									"key": "city",
+									"value": "Praha",
+									"type": "text"
+								},
+								{
+									"key": "mobile_number",
+									"value": "123456789",
+									"type": "text"
+								}
+							]
+						}
+					},
+					"event": [
+						{
+							"listen": "prerequest",
+							"script": {
+								"type": "text/javascript",
+								"exec": [
+									"// Generate unique test data before sending the request",
+									"const timestamp = Date.now();",
+									"pm.environment.set(\"test_email\", `qa.postman.${timestamp}@test.com`);",
+									"pm.environment.set(\"test_password\", \"Test1234!\");"
+								]
+							}
+						},
+						{
+							"listen": "test",
+							"script": {
+								"type": "text/javascript",
+								"exec": [
+									"const isEnvironmentIssue = pm.response.code === 302;",
+									"pm.test(\"API responded normally (not redirected)\", function () {",
+									"    pm.expect(isEnvironmentIssue, \"Got HTTP 302 instead of the expected API response. This is known third-party infrastructure instability (see test-strategy.md), not a defect - re-run this request.\").to.be.false;",
+									"});",
+									"",
+									"if (!isEnvironmentIssue) {",
+									"    pm.test(\"Status code is 200\", function () {",
+									"        pm.response.to.have.status(200);",
+									"    });",
+									"    ",
+									"    const json = pm.response.json();",
+									"    pm.test(\"Account is created (responseCode 201)\", function () {",
+									"        pm.expect(json.responseCode).to.eql(201);",
+									"        pm.expect(json.message).to.eql(\"User created!\");",
+									"    });",
+									"    ",
+									"    // Flag downstream requests can check before assuming this account exists",
+									"    pm.environment.set(\"account_created\", json.responseCode === 201);",
+									"}"
+								]
+							}
+						}
+					]
+				},
+				{
+					"name": "[High] POST createAccount - missing mandatory field (negative)",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/api/createAccount",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"createAccount"
+							]
+						},
+						"body": {
+							"mode": "urlencoded",
+							"urlencoded": [
+								{
+									"key": "name",
+									"value": "{{$randomFirstName}}",
+									"type": "text"
+								},
+								{
+									"key": "email",
+									"value": "{{test_email}}",
+									"type": "text"
+								},
+								{
+									"key": "password",
+									"value": "{{test_password}}",
+									"type": "text"
+								},
+								{
+									"key": "title",
+									"value": "Mr",
+									"type": "text"
+								},
+								{
+									"key": "birth_date",
+									"value": "1",
+									"type": "text"
+								},
+								{
+									"key": "birth_month",
+									"value": "1",
+									"type": "text"
+								},
+								{
+									"key": "birth_year",
+									"value": "1990",
+									"type": "text"
+								},
+								{
+									"key": "lastname",
+									"value": "Test",
+									"type": "text"
+								},
+								{
+									"key": "company",
+									"value": "Test",
+									"type": "text"
+								},
+								{
+									"key": "address1",
+									"value": "Test Street 1",
+									"type": "text"
+								},
+								{
+									"key": "address2",
+									"value": "",
+									"type": "text"
+								},
+								{
+									"key": "country",
+									"value": "Czech Republic",
+									"type": "text"
+								},
+								{
+									"key": "zipcode",
+									"value": "10000",
+									"type": "text"
+								},
+								{
+									"key": "state",
+									"value": "Praha",
+									"type": "text"
+								},
+								{
+									"key": "city",
+									"value": "Praha",
+									"type": "text"
+								},
+								{
+									"key": "mobile_number",
+									"value": "123456789",
+									"type": "text"
+								}
+							]
+						}
+					},
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"type": "text/javascript",
+								"exec": [
+									"const isEnvironmentIssue = pm.response.code === 302;",
+									"pm.test(\"API responded normally (not redirected)\", function () {",
+									"    pm.expect(isEnvironmentIssue, \"Got HTTP 302 instead of the expected API response. This is known third-party infrastructure instability (see test-strategy.md), not a defect - re-run this request.\").to.be.false;",
+									"});",
+									"",
+									"if (!isEnvironmentIssue) {",
+									"    pm.test(\"Status code is 200 (see note: real result is in responseCode)\", function () {",
+									"        pm.response.to.have.status(200);",
+									"    });",
+									"    ",
+									"    const json = pm.response.json();",
+									"    pm.test(\"Missing field is rejected with a clear error\", function () {",
+									"        pm.expect(json.responseCode).to.eql(400);",
+									"        pm.expect(json.message).to.be.a(\"string\").and.not.empty;",
+									"    });",
+									"}"
+								]
+							}
+						}
+					]
+				},
+				{
+					"name": "[High] POST createAccount - duplicate email (negative, chained)",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/api/createAccount",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"createAccount"
+							]
+						},
+						"body": {
+							"mode": "urlencoded",
+							"urlencoded": [
+								{
+									"key": "name",
+									"value": "{{$randomFirstName}}",
+									"type": "text"
+								},
+								{
+									"key": "email",
+									"value": "{{test_email}}",
+									"type": "text"
+								},
+								{
+									"key": "password",
+									"value": "{{test_password}}",
+									"type": "text"
+								},
+								{
+									"key": "title",
+									"value": "Mr",
+									"type": "text"
+								},
+								{
+									"key": "birth_date",
+									"value": "1",
+									"type": "text"
+								},
+								{
+									"key": "birth_month",
+									"value": "1",
+									"type": "text"
+								},
+								{
+									"key": "birth_year",
+									"value": "1990",
+									"type": "text"
+								},
+								{
+									"key": "firstname",
+									"value": "QA",
+									"type": "text"
+								},
+								{
+									"key": "lastname",
+									"value": "Test",
+									"type": "text"
+								},
+								{
+									"key": "company",
+									"value": "Test",
+									"type": "text"
+								},
+								{
+									"key": "address1",
+									"value": "Test Street 1",
+									"type": "text"
+								},
+								{
+									"key": "address2",
+									"value": "",
+									"type": "text"
+								},
+								{
+									"key": "country",
+									"value": "Czech Republic",
+									"type": "text"
+								},
+								{
+									"key": "zipcode",
+									"value": "10000",
+									"type": "text"
+								},
+								{
+									"key": "state",
+									"value": "Praha",
+									"type": "text"
+								},
+								{
+									"key": "city",
+									"value": "Praha",
+									"type": "text"
+								},
+								{
+									"key": "mobile_number",
+									"value": "123456789",
+									"type": "text"
+								}
+							]
+						}
+					},
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"type": "text/javascript",
+								"exec": [
+									"pm.test(\"Prerequisite: 'POST createAccount - happy path' ran first in this collection run\", function () {",
+									"    pm.expect(String(pm.environment.get(\"account_created\")), \"account_created flag is not 'true' - this request depends on 'POST createAccount - happy path' running first. Run the Account folder in order, not this request in isolation.\").to.eql(\"true\");",
+									"});",
+									"",
+									"const isEnvironmentIssue = pm.response.code === 302;",
+									"pm.test(\"API responded normally (not redirected)\", function () {",
+									"    pm.expect(isEnvironmentIssue, \"Got HTTP 302 instead of the expected API response. This is known third-party infrastructure instability (see test-strategy.md), not a defect - re-run this request.\").to.be.false;",
+									"});",
+									"",
+									"if (!isEnvironmentIssue) {",
+									"    pm.test(\"Status code is 200\", function () {",
+									"        pm.response.to.have.status(200);",
+									"    });",
+									"    ",
+									"    const json = pm.response.json();",
+									"    pm.test(\"Duplicate email is rejected\", function () {",
+									"        pm.expect(json.responseCode).to.eql(400);",
+									"        pm.expect(json.message).to.eql(\"Email already exists!\");",
+									"    });",
+									"}"
+								]
+							}
+						}
+					]
+				},
+				{
+					"name": "[Low] POST createAccount - unexpected extra parameter (boundary)",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/api/createAccount",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"createAccount"
+							]
+						},
+						"body": {
+							"mode": "urlencoded",
+							"urlencoded": [
+								{
+									"key": "name",
+									"value": "{{$randomFirstName}}",
+									"type": "text"
+								},
+								{
+									"key": "email",
+									"value": "{{test_email}}",
+									"type": "text"
+								},
+								{
+									"key": "password",
+									"value": "{{test_password}}",
+									"type": "text"
+								},
+								{
+									"key": "title",
+									"value": "Mr",
+									"type": "text"
+								},
+								{
+									"key": "birth_date",
+									"value": "1",
+									"type": "text"
+								},
+								{
+									"key": "birth_month",
+									"value": "1",
+									"type": "text"
+								},
+								{
+									"key": "birth_year",
+									"value": "1990",
+									"type": "text"
+								},
+								{
+									"key": "firstname",
+									"value": "QA",
+									"type": "text"
+								},
+								{
+									"key": "lastname",
+									"value": "Test",
+									"type": "text"
+								},
+								{
+									"key": "company",
+									"value": "Test",
+									"type": "text"
+								},
+								{
+									"key": "address1",
+									"value": "Test Street 1",
+									"type": "text"
+								},
+								{
+									"key": "address2",
+									"value": "",
+									"type": "text"
+								},
+								{
+									"key": "country",
+									"value": "Czech Republic",
+									"type": "text"
+								},
+								{
+									"key": "zipcode",
+									"value": "10000",
+									"type": "text"
+								},
+								{
+									"key": "state",
+									"value": "Praha",
+									"type": "text"
+								},
+								{
+									"key": "city",
+									"value": "Praha",
+									"type": "text"
+								},
+								{
+									"key": "mobile_number",
+									"value": "123456789",
+									"type": "text"
+								},
+								{
+									"key": "randomField",
+									"value": "unexpectedValue",
+									"type": "text"
+								}
+							]
+						}
+					},
+					"event": [
+						{
+							"listen": "prerequest",
+							"script": {
+								"type": "text/javascript",
+								"exec": [
+									"const timestamp = Date.now();",
+									"pm.environment.set(\"test_email\", `qa.postman.extra.${timestamp}@test.com`);",
+									"pm.environment.set(\"test_password\", \"Test1234!\");"
+								]
+							}
+						},
+						{
+							"listen": "test",
+							"script": {
+								"type": "text/javascript",
+								"exec": [
+									"const isEnvironmentIssue = pm.response.code === 302;",
+									"pm.test(\"API responded normally (not redirected)\", function () {",
+									"    pm.expect(isEnvironmentIssue, \"Got HTTP 302 instead of the expected API response. This is known third-party infrastructure instability (see test-strategy.md), not a defect - re-run this request.\").to.be.false;",
+									"});",
+									"",
+									"if (!isEnvironmentIssue) {",
+									"    pm.test(\"Status code is 200\", function () {",
+									"        pm.response.to.have.status(200);",
+									"    });",
+									"    ",
+									"    const json = pm.response.json();",
+									"    pm.test(\"Unexpected extra parameter does not break account creation\", function () {",
+									"        pm.expect(json.responseCode).to.eql(201);",
+									"        pm.expect(json.message).to.eql(\"User created!\");",
+									"    });",
+									"}"
+								]
+							}
+						}
+					]
+				},
+				{
+					"name": "[Critical] POST verifyLogin - happy path (valid credentials, chained)",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/api/verifyLogin",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"verifyLogin"
+							]
+						},
+						"body": {
+							"mode": "urlencoded",
+							"urlencoded": [
+								{
+									"key": "email",
+									"value": "{{test_email}}",
+									"type": "text"
+								},
+								{
+									"key": "password",
+									"value": "{{test_password}}",
+									"type": "text"
+								}
+							]
+						}
+					},
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"type": "text/javascript",
+								"exec": [
+									"pm.test(\"Prerequisite: 'POST createAccount - happy path' ran first in this collection run\", function () {",
+									"    pm.expect(String(pm.environment.get(\"account_created\")), \"account_created flag is not 'true' - this request depends on 'POST createAccount - happy path' running first. Run the Account folder in order, not this request in isolation.\").to.eql(\"true\");",
+									"});",
+									"",
+									"const isEnvironmentIssue = pm.response.code === 302;",
+									"pm.test(\"API responded normally (not redirected)\", function () {",
+									"    pm.expect(isEnvironmentIssue, \"Got HTTP 302 instead of the expected API response. This is known third-party infrastructure instability (see test-strategy.md), not a defect - re-run this request.\").to.be.false;",
+									"});",
+									"",
+									"if (!isEnvironmentIssue) {",
+									"    pm.test(\"Status code is 200\", function () {",
+									"        pm.response.to.have.status(200);",
+									"    });",
+									"    ",
+									"    const json = pm.response.json();",
+									"    pm.test(\"Valid credentials are confirmed\", function () {",
+									"        pm.expect(json.responseCode).to.eql(200);",
+									"        pm.expect(json.message).to.eql(\"User exists!\");",
+									"    });",
+									"}"
+								]
+							}
+						}
+					]
+				},
+				{
+					"name": "[Critical] POST verifyLogin - invalid credentials (negative, security)",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/api/verifyLogin",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"verifyLogin"
+							]
+						},
+						"body": {
+							"mode": "urlencoded",
+							"urlencoded": [
+								{
+									"key": "email",
+									"value": "nonexistent.{{$randomInt}}@test.com",
+									"type": "text"
+								},
+								{
+									"key": "password",
+									"value": "WrongPassword1!",
+									"type": "text"
+								}
+							]
+						}
+					},
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"type": "text/javascript",
+								"exec": [
+									"const isEnvironmentIssue = pm.response.code === 302;",
+									"pm.test(\"API responded normally (not redirected)\", function () {",
+									"    pm.expect(isEnvironmentIssue, \"Got HTTP 302 instead of the expected API response. This is known third-party infrastructure instability (see test-strategy.md), not a defect - re-run this request.\").to.be.false;",
+									"});",
+									"",
+									"if (!isEnvironmentIssue) {",
+									"    pm.test(\"Status code is 200\", function () {",
+									"        pm.response.to.have.status(200);",
+									"    });",
+									"    ",
+									"    const json = pm.response.json();",
+									"    pm.test(\"Invalid credentials are rejected, not silently accepted (security)\", function () {",
+									"        pm.expect(json.responseCode).to.eql(404);",
+									"        pm.expect(json.message).to.eql(\"User not found!\");",
+									"    });",
+									"}"
+								]
+							}
+						}
+					]
+				},
+				{
+					"name": "[High] POST verifyLogin - missing email parameter (negative)",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/api/verifyLogin",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"verifyLogin"
+							]
+						},
+						"body": {
+							"mode": "urlencoded",
+							"urlencoded": [
+								{
+									"key": "password",
+									"value": "Test1234!",
+									"type": "text"
+								}
+							]
+						}
+					},
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"type": "text/javascript",
+								"exec": [
+									"const isEnvironmentIssue = pm.response.code === 302;",
+									"pm.test(\"API responded normally (not redirected)\", function () {",
+									"    pm.expect(isEnvironmentIssue, \"Got HTTP 302 instead of the expected API response. This is known third-party infrastructure instability (see test-strategy.md), not a defect - re-run this request.\").to.be.false;",
+									"});",
+									"",
+									"if (!isEnvironmentIssue) {",
+									"    pm.test(\"Status code is 200\", function () {",
+									"        pm.response.to.have.status(200);",
+									"    });",
+									"    ",
+									"    const json = pm.response.json();",
+									"    pm.test(\"Missing email parameter is rejected\", function () {",
+									"        pm.expect(json.responseCode).to.eql(400);",
+									"        pm.expect(json.message).to.be.a(\"string\").and.not.empty;",
+									"    });",
+									"}"
+								]
+							}
+						}
+					]
+				},
+				{
+					"name": "[Medium] POST verifyLogin - empty string email (boundary)",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/api/verifyLogin",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"verifyLogin"
+							]
+						},
+						"body": {
+							"mode": "urlencoded",
+							"urlencoded": [
+								{
+									"key": "email",
+									"value": "",
+									"type": "text"
+								},
+								{
+									"key": "password",
+									"value": "Test1234!",
+									"type": "text"
+								}
+							]
+						}
+					},
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"type": "text/javascript",
+								"exec": [
+									"const isEnvironmentIssue = pm.response.code === 302;",
+									"pm.test(\"API responded normally (not redirected)\", function () {",
+									"    pm.expect(isEnvironmentIssue, \"Got HTTP 302 instead of the expected API response. This is known third-party infrastructure instability (see test-strategy.md), not a defect - re-run this request.\").to.be.false;",
+									"});",
+									"",
+									"if (!isEnvironmentIssue) {",
+									"    pm.test(\"Status code is 200\", function () {",
+									"        pm.response.to.have.status(200);",
+									"    });",
+									"    ",
+									"    const json = pm.response.json();",
+									"    pm.test(\"Empty-string email is treated as 'present but no match' (404), not as a missing parameter (400)\", function () {",
+									"        pm.expect(json.responseCode).to.eql(404);",
+									"        pm.expect(json.message).to.eql(\"User not found!\");",
+									"    });",
+									"}"
+								]
+							}
+						}
+					]
+				},
+				{
+					"name": "[Medium] POST verifyLogin - whitespace-only email (boundary)",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/api/verifyLogin",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"verifyLogin"
+							]
+						},
+						"body": {
+							"mode": "urlencoded",
+							"urlencoded": [
+								{
+									"key": "email",
+									"value": "   ",
+									"type": "text"
+								},
+								{
+									"key": "password",
+									"value": "Test1234!",
+									"type": "text"
+								}
+							]
+						}
+					},
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"type": "text/javascript",
+								"exec": [
+									"const isEnvironmentIssue = pm.response.code === 302;",
+									"pm.test(\"API responded normally (not redirected)\", function () {",
+									"    pm.expect(isEnvironmentIssue, \"Got HTTP 302 instead of the expected API response. This is known third-party infrastructure instability (see test-strategy.md), not a defect - re-run this request.\").to.be.false;",
+									"});",
+									"",
+									"if (!isEnvironmentIssue) {",
+									"    pm.test(\"Status code is 200\", function () {",
+									"        pm.response.to.have.status(200);",
+									"    });",
+									"    ",
+									"    const json = pm.response.json();",
+									"    pm.test(\"Whitespace-only email is treated as 'present but no match' (404), not as a missing parameter (400) - not trimmed to empty first\", function () {",
+									"        pm.expect(json.responseCode).to.eql(404);",
+									"        pm.expect(json.message).to.eql(\"User not found!\");",
+									"    });",
+									"}"
+								]
+							}
+						}
+					]
+				},
+				{
+					"name": "[Medium] POST verifyLogin - empty body (negative)",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/api/verifyLogin",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"verifyLogin"
+							]
+						},
+						"body": {
+							"mode": "raw",
+							"raw": ""
+						}
+					},
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"type": "text/javascript",
+								"exec": [
+									"const isEnvironmentIssue = pm.response.code === 302;",
+									"pm.test(\"API responded normally (not redirected)\", function () {",
+									"    pm.expect(isEnvironmentIssue, \"Got HTTP 302 instead of the expected API response. This is known third-party infrastructure instability (see test-strategy.md), not a defect - re-run this request.\").to.be.false;",
+									"});",
+									"",
+									"if (!isEnvironmentIssue) {",
+									"    pm.test(\"Empty body is rejected with a clear error, not a server error\", function () {",
+									"        pm.response.to.not.have.status(500);",
+									"        const json = pm.response.json();",
+									"        pm.expect(json.responseCode).to.eql(400);",
+									"    });",
+									"}"
+								]
+							}
+						}
+					]
+				},
+				{
+					"name": "[Medium] POST verifyLogin - invalid Content-Type (negative)",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/api/verifyLogin",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"verifyLogin"
+							]
+						},
+						"body": {
+							"mode": "raw",
+							"raw": "{\"email\": \"test@test.com\", \"password\": \"Test1234!\"}"
+						}
+					},
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"type": "text/javascript",
+								"exec": [
+									"const isEnvironmentIssue = pm.response.code === 302;",
+									"pm.test(\"API responded normally (not redirected)\", function () {",
+									"    pm.expect(isEnvironmentIssue, \"Got HTTP 302 instead of the expected API response. This is known third-party infrastructure instability (see test-strategy.md), not a defect - re-run this request.\").to.be.false;",
+									"});",
+									"",
+									"if (!isEnvironmentIssue) {",
+									"    pm.test(\"Invalid Content-Type is handled gracefully, not a server error\", function () {",
+									"        pm.response.to.not.have.status(500);",
+									"    });",
+									"}"
+								]
+							}
+						}
+					]
+				},
+				{
+					"name": "[Low] DELETE verifyLogin - unsupported method (negative)",
+					"request": {
+						"method": "DELETE",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/api/verifyLogin",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"verifyLogin"
+							]
+						}
+					},
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"type": "text/javascript",
+								"exec": [
+									"const isEnvironmentIssue = pm.response.code === 302;",
+									"pm.test(\"API responded normally (not redirected)\", function () {",
+									"    pm.expect(isEnvironmentIssue, \"Got HTTP 302 instead of the expected API response. This is known third-party infrastructure instability (see test-strategy.md), not a defect - re-run this request.\").to.be.false;",
+									"});",
+									"",
+									"if (!isEnvironmentIssue) {",
+									"    pm.test(\"Status code is 200\", function () {",
+									"        pm.response.to.have.status(200);",
+									"    });",
+									"    ",
+									"    const json = pm.response.json();",
+									"    pm.test(\"Unsupported method is rejected\", function () {",
+									"        pm.expect(json.responseCode).to.eql(405);",
+									"        pm.expect(json.message).to.eql(\"This request method is not supported.\");",
+									"    });",
+									"}"
+								]
+							}
+						}
+					]
+				}
+			]
+		},
+		{
+			"name": "Product",
+			"item": [
+				{
+					"name": "[High] GET productsList - happy path",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/api/productsList",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"productsList"
+							]
+						}
+					},
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"type": "text/javascript",
+								"exec": [
+									"const isEnvironmentIssue = pm.response.code === 302;",
+									"pm.test(\"API responded normally (not redirected)\", function () {",
+									"    pm.expect(isEnvironmentIssue, \"Got HTTP 302 instead of the expected API response. This is known third-party infrastructure instability (see test-strategy.md), not a defect - re-run this request.\").to.be.false;",
+									"});",
+									"",
+									"if (!isEnvironmentIssue) {",
+									"    pm.test(\"Status code is 200\", function () {",
+									"        pm.response.to.have.status(200);",
+									"    });",
+									"",
+									"    const json = pm.response.json();",
+									"    pm.test(\"Response has a non-empty products array\", function () {",
+									"        pm.expect(json.responseCode).to.eql(200);",
+									"        pm.expect(json.products).to.be.an(\"array\").that.is.not.empty;",
+									"    });",
+									"",
+									"    pm.test(\"Every product in the list has a valid structure (not just the first one)\", function () {",
+									"        const products = pm.response.json().products;",
+									"        products.forEach((product, index) => {",
+									"            pm.expect(product, `product at index ${index}`).to.have.all.keys(\"id\", \"name\", \"price\", \"brand\", \"category\");",
+									"            pm.expect(product.id, `id at index ${index}`).to.be.a(\"number\");",
+									"            pm.expect(product.name, `name at index ${index}`).to.be.a(\"string\").and.not.empty;",
+									"            pm.expect(product.price, `price at index ${index}`).to.be.a(\"string\").and.match(/^Rs\\. \\d+$/);",
+									"        });",
+									"    });",
+									"}"
+								]
+							}
+						}
+					]
+				},
+				{
+					"name": "[Low] POST productsList - unsupported method (negative)",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/api/productsList",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"productsList"
+							]
+						}
+					},
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"type": "text/javascript",
+								"exec": [
+									"const isEnvironmentIssue = pm.response.code === 302;",
+									"pm.test(\"API responded normally (not redirected)\", function () {",
+									"    pm.expect(isEnvironmentIssue, \"Got HTTP 302 instead of the expected API response. This is known third-party infrastructure instability (see test-strategy.md), not a defect - re-run this request.\").to.be.false;",
+									"});",
+									"",
+									"if (!isEnvironmentIssue) {",
+									"    pm.test(\"Status code is 200\", function () {",
+									"        pm.response.to.have.status(200);",
+									"    });",
+									"    ",
+									"    const json = pm.response.json();",
+									"    pm.test(\"Unsupported method is rejected\", function () {",
+									"        pm.expect(json.responseCode).to.eql(405);",
+									"    });",
+									"}"
+								]
+							}
+						}
+					]
+				},
+				{
+					"name": "[High] POST searchProduct - happy path (valid term)",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/api/searchProduct",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"searchProduct"
+							]
+						},
+						"body": {
+							"mode": "urlencoded",
+							"urlencoded": [
+								{
+									"key": "search_product",
+									"value": "dress",
+									"type": "text"
+								}
+							]
+						}
+					},
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"type": "text/javascript",
+								"exec": [
+									"const isEnvironmentIssue = pm.response.code === 302;",
+									"pm.test(\"API responded normally (not redirected)\", function () {",
+									"    pm.expect(isEnvironmentIssue, \"Got HTTP 302 instead of the expected API response. This is known third-party infrastructure instability (see test-strategy.md), not a defect - re-run this request.\").to.be.false;",
+									"});",
+									"",
+									"if (!isEnvironmentIssue) {",
+									"    pm.test(\"Status code is 200\", function () {",
+									"        pm.response.to.have.status(200);",
+									"    });",
+									"",
+									"    const json = pm.response.json();",
+									"    pm.test(\"Returned products match the search term (by name OR category - confirmed via manual API exploration)\", function () {",
+									"        pm.expect(json.responseCode).to.eql(200);",
+									"        pm.expect(json.products).to.be.an(\"array\").that.is.not.empty;",
+									"        const term = pm.request.body.urlencoded.get(\"search_product\").toLowerCase();",
+									"        json.products.forEach(p => {",
+									"            const nameMatches = p.name.toLowerCase().includes(term);",
+									"            const categoryMatches = p.category.category.toLowerCase().includes(term);",
+									"            pm.expect(nameMatches || categoryMatches, `\"${p.name}\" matches neither name nor category for term \"${term}\"`).to.be.true;",
+									"        });",
+									"    });",
+									"}"
+								]
+							}
+						}
+					]
+				},
+				{
+					"name": "[High] POST searchProduct - missing parameter (negative)",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/api/searchProduct",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"searchProduct"
+							]
+						}
+					},
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"type": "text/javascript",
+								"exec": [
+									"const isEnvironmentIssue = pm.response.code === 302;",
+									"pm.test(\"API responded normally (not redirected)\", function () {",
+									"    pm.expect(isEnvironmentIssue, \"Got HTTP 302 instead of the expected API response. This is known third-party infrastructure instability (see test-strategy.md), not a defect - re-run this request.\").to.be.false;",
+									"});",
+									"",
+									"if (!isEnvironmentIssue) {",
+									"    pm.test(\"Status code is 200\", function () {",
+									"        pm.response.to.have.status(200);",
+									"    });",
+									"    ",
+									"    const json = pm.response.json();",
+									"    pm.test(\"Missing parameter is rejected\", function () {",
+									"        pm.expect(json.responseCode).to.eql(400);",
+									"    pm.expect(json.message).to.eql(\"Bad request, search_product parameter is missing in POST request.\");",
+									"    });",
+									"}"
+								]
+							}
+						}
+					]
+				},
+				{
+					"name": "[High] POST searchProduct - injection-like input (security/robustness)",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/api/searchProduct",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"searchProduct"
+							]
+						},
+						"body": {
+							"mode": "urlencoded",
+							"urlencoded": [
+								{
+									"key": "search_product",
+									"value": "' OR 1=1-- <script>alert(1)</script>",
+									"type": "text"
+								}
+							]
+						}
+					},
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"type": "text/javascript",
+								"exec": [
+									"const isEnvironmentIssue = pm.response.code === 302;",
+									"pm.test(\"API responded normally (not redirected)\", function () {",
+									"    pm.expect(isEnvironmentIssue, \"Got HTTP 302 instead of the expected API response. This is known third-party infrastructure instability (see test-strategy.md), not a defect - re-run this request.\").to.be.false;",
+									"});",
+									"",
+									"if (!isEnvironmentIssue) {",
+									"    pm.test(\"No server error on injection-like input (robustness)\", function () {",
+									"        pm.response.to.not.have.status(500);",
+									"    });",
+									"    ",
+									"    pm.test(\"Input is not reflected unescaped in the response (basic XSS check)\", function () {",
+									"        pm.expect(pm.response.text()).to.not.include(\"<script>\");",
+									"    });",
+									"}"
+								]
+							}
+						}
+					]
+				},
+				{
+					"name": "[Low] DELETE productsList - listed in Allow header but not supported (negative)",
+					"request": {
+						"method": "DELETE",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/api/productsList",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"productsList"
+							]
+						}
+					},
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"type": "text/javascript",
+								"exec": [
+									"const isEnvironmentIssue = pm.response.code === 302;",
+									"pm.test(\"API responded normally (not redirected)\", function () {",
+									"    pm.expect(isEnvironmentIssue, \"Got HTTP 302 instead of the expected API response.\").to.be.false;",
+									"});",
+									"",
+									"if (!isEnvironmentIssue) {",
+									"    pm.test(\"Status code is 200\", function () {",
+									"        pm.response.to.have.status(200);",
+									"    });",
+									"",
+									"    const json = pm.response.json();",
+									"    pm.test(\"DELETE/PUT are listed in the Allow header but not functionally supported (return 405 like any other unsupported method - the Allow header is misleading)\", function () {",
+									"        pm.expect(json.responseCode).to.eql(405);",
+									"        pm.expect(json.message).to.eql(\"This request method is not supported.\");",
+									"    });",
+									"}"
+								]
+							}
+						}
+					]
+				},
+				{
+					"name": "[Low] PUT productsList - listed in Allow header but not supported (negative)",
+					"request": {
+						"method": "PUT",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/api/productsList",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"productsList"
+							]
+						}
+					},
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"type": "text/javascript",
+								"exec": [
+									"const isEnvironmentIssue = pm.response.code === 302;",
+									"pm.test(\"API responded normally (not redirected)\", function () {",
+									"    pm.expect(isEnvironmentIssue, \"Got HTTP 302 instead of the expected API response.\").to.be.false;",
+									"});",
+									"",
+									"if (!isEnvironmentIssue) {",
+									"    pm.test(\"Status code is 200\", function () {",
+									"        pm.response.to.have.status(200);",
+									"    });",
+									"",
+									"    const json = pm.response.json();",
+									"    pm.test(\"DELETE/PUT are listed in the Allow header but not functionally supported (return 405 like any other unsupported method - the Allow header is misleading)\", function () {",
+									"        pm.expect(json.responseCode).to.eql(405);",
+									"        pm.expect(json.message).to.eql(\"This request method is not supported.\");",
+									"    });",
+									"}"
+								]
+							}
+						}
+					]
+				},
+				{
+					"name": "[Low] OPTIONS productsList - endpoint metadata",
+					"request": {
+						"method": "OPTIONS",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/api/productsList",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"productsList"
+							]
+						}
+					},
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"type": "text/javascript",
+								"exec": [
+									"const isEnvironmentIssue = pm.response.code === 302;",
+									"pm.test(\"API responded normally (not redirected)\", function () {",
+									"    pm.expect(isEnvironmentIssue, \"Got HTTP 302 instead of the expected API response.\").to.be.false;",
+									"});",
+									"",
+									"if (!isEnvironmentIssue) {",
+									"    pm.test(\"Status code is 200\", function () {",
+									"        pm.response.to.have.status(200);",
+									"    });",
+									"",
+									"    pm.test(\"Response describes endpoint metadata (confirmed OPTIONS behaviour, distinct from other methods)\", function () {",
+									"        const json = pm.response.json();",
+									"        pm.expect(json).to.have.property(\"name\");",
+									"        pm.expect(json).to.have.property(\"renders\");",
+									"    });",
+									"}"
+								]
+							}
+						}
+					]
+				}
+			]
+		}
+	]
+}
