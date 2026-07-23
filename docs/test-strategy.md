@@ -14,7 +14,10 @@ createAccount).
 
 Out of scope:
 - Payment gateway — the application does not process real payments.
-- `deleteAccount` / `updateAccount` API — outside the original scope.
+- `updateAccount` API — outside the original scope.
+- `deleteAccount` as a tested feature (its own assertions/edge cases) — outside scope.
+  It is used operationally in the Postman collection's Teardown folder to clean up
+  accounts created by other tests; that usage is not itself under test.
 - Cross-browser matrix — timeboxed to Chromium; a time constraint, not an impact decision.
 - Wishlist, Contact Us, Subscription — low impact on the core purchase flow.
 

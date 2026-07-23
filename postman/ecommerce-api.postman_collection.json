@@ -4,6 +4,31 @@
 		"description": "API test suite for automationexercise.com, covering createAccount, verifyLogin, productsList and searchProduct. See docs/test-cases/api.md and docs/risk-analysis.md for the underlying risk-based design.",
 		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
 	},
+	"event": [
+		{
+			"listen": "test",
+			"script": {
+				"type": "text/javascript",
+				"exec": [
+					"// Collection-level: this API returns HTTP 200 even when the JSON body reports an",
+					"// application-level failure (see docs/test-strategy.md). Runs once per request instead",
+					"// of repeating the same assertion in every request's own test script.",
+					"// Excluded: requests that deliberately probe malformed/edge-case input, where forcing",
+					"// an HTTP-200 expectation would be testing the wrong thing.",
+					"const skipTransportCheck = [",
+					"    \"[Medium] POST verifyLogin - empty body (negative)\",",
+					"    \"[Medium] POST verifyLogin - invalid Content-Type (negative)\"",
+					"];",
+					"",
+					"if (!skipTransportCheck.includes(pm.info.requestName) && pm.response.code !== 302) {",
+					"    pm.test(\"Transport status is 200, as implemented by this API\", function () {",
+					"        pm.response.to.have.status(200);",
+					"    });",
+					"}"
+				]
+			}
+		}
+	],
 	"item": [
 		{
 			"name": "Account",
@@ -138,10 +163,6 @@
 									"});",
 									"",
 									"if (!isEnvironmentIssue) {",
-									"    pm.test(\"Status code is 200\", function () {",
-									"        pm.response.to.have.status(200);",
-									"    });",
-									"    ",
 									"    const json = pm.response.json();",
 									"    pm.test(\"Account is created (responseCode 201)\", function () {",
 									"        pm.expect(json.responseCode).to.eql(201);",
@@ -150,6 +171,11 @@
 									"    ",
 									"    // Flag downstream requests can check before assuming this account exists",
 									"    pm.environment.set(\"account_created\", json.responseCode === 201);",
+									"",
+									"    // Track the created account so the Teardown folder can delete it at the end of the run",
+									"    if (json.responseCode === 201) {",
+									"        pm.environment.set(\"created_account_main_email\", pm.environment.get(\"test_email\"));",
+									"    }",
 									"}"
 								]
 							}
@@ -269,10 +295,6 @@
 									"});",
 									"",
 									"if (!isEnvironmentIssue) {",
-									"    pm.test(\"Status code is 200 (see note: real result is in responseCode)\", function () {",
-									"        pm.response.to.have.status(200);",
-									"    });",
-									"    ",
 									"    const json = pm.response.json();",
 									"    pm.test(\"Missing field is rejected with a clear error\", function () {",
 									"        pm.expect(json.responseCode).to.eql(400);",
@@ -406,10 +428,6 @@
 									"});",
 									"",
 									"if (!isEnvironmentIssue) {",
-									"    pm.test(\"Status code is 200\", function () {",
-									"        pm.response.to.have.status(200);",
-									"    });",
-									"    ",
 									"    const json = pm.response.json();",
 									"    pm.test(\"Duplicate email is rejected\", function () {",
 									"        pm.expect(json.responseCode).to.eql(400);",
@@ -555,15 +573,16 @@
 									"});",
 									"",
 									"if (!isEnvironmentIssue) {",
-									"    pm.test(\"Status code is 200\", function () {",
-									"        pm.response.to.have.status(200);",
-									"    });",
-									"    ",
 									"    const json = pm.response.json();",
 									"    pm.test(\"Unexpected extra parameter does not break account creation\", function () {",
 									"        pm.expect(json.responseCode).to.eql(201);",
 									"        pm.expect(json.message).to.eql(\"User created!\");",
 									"    });",
+									"",
+									"    // Track this second account too - it also needs cleanup in Teardown",
+									"    if (json.responseCode === 201) {",
+									"        pm.environment.set(\"created_account_extra_email\", pm.environment.get(\"test_email\"));",
+									"    }",
 									"}"
 								]
 							}
@@ -617,10 +636,6 @@
 									"});",
 									"",
 									"if (!isEnvironmentIssue) {",
-									"    pm.test(\"Status code is 200\", function () {",
-									"        pm.response.to.have.status(200);",
-									"    });",
-									"    ",
 									"    const json = pm.response.json();",
 									"    pm.test(\"Valid credentials are confirmed\", function () {",
 									"        pm.expect(json.responseCode).to.eql(200);",
@@ -675,10 +690,6 @@
 									"});",
 									"",
 									"if (!isEnvironmentIssue) {",
-									"    pm.test(\"Status code is 200\", function () {",
-									"        pm.response.to.have.status(200);",
-									"    });",
-									"    ",
 									"    const json = pm.response.json();",
 									"    pm.test(\"Invalid credentials are rejected, not silently accepted (security)\", function () {",
 									"        pm.expect(json.responseCode).to.eql(404);",
@@ -728,10 +739,6 @@
 									"});",
 									"",
 									"if (!isEnvironmentIssue) {",
-									"    pm.test(\"Status code is 200\", function () {",
-									"        pm.response.to.have.status(200);",
-									"    });",
-									"    ",
 									"    const json = pm.response.json();",
 									"    pm.test(\"Missing email parameter is rejected\", function () {",
 									"        pm.expect(json.responseCode).to.eql(400);",
@@ -786,10 +793,6 @@
 									"});",
 									"",
 									"if (!isEnvironmentIssue) {",
-									"    pm.test(\"Status code is 200\", function () {",
-									"        pm.response.to.have.status(200);",
-									"    });",
-									"    ",
 									"    const json = pm.response.json();",
 									"    pm.test(\"Empty-string email is treated as 'present but no match' (404), not as a missing parameter (400)\", function () {",
 									"        pm.expect(json.responseCode).to.eql(404);",
@@ -844,10 +847,6 @@
 									"});",
 									"",
 									"if (!isEnvironmentIssue) {",
-									"    pm.test(\"Status code is 200\", function () {",
-									"        pm.response.to.have.status(200);",
-									"    });",
-									"    ",
 									"    const json = pm.response.json();",
 									"    pm.test(\"Whitespace-only email is treated as 'present but no match' (404), not as a missing parameter (400) - not trimmed to empty first\", function () {",
 									"        pm.expect(json.responseCode).to.eql(404);",
@@ -977,10 +976,6 @@
 									"});",
 									"",
 									"if (!isEnvironmentIssue) {",
-									"    pm.test(\"Status code is 200\", function () {",
-									"        pm.response.to.have.status(200);",
-									"    });",
-									"    ",
 									"    const json = pm.response.json();",
 									"    pm.test(\"Unsupported method is rejected\", function () {",
 									"        pm.expect(json.responseCode).to.eql(405);",
@@ -1025,10 +1020,6 @@
 									"});",
 									"",
 									"if (!isEnvironmentIssue) {",
-									"    pm.test(\"Status code is 200\", function () {",
-									"        pm.response.to.have.status(200);",
-									"    });",
-									"",
 									"    const json = pm.response.json();",
 									"    pm.test(\"Response has a non-empty products array\", function () {",
 									"        pm.expect(json.responseCode).to.eql(200);",
@@ -1078,10 +1069,6 @@
 									"});",
 									"",
 									"if (!isEnvironmentIssue) {",
-									"    pm.test(\"Status code is 200\", function () {",
-									"        pm.response.to.have.status(200);",
-									"    });",
-									"    ",
 									"    const json = pm.response.json();",
 									"    pm.test(\"Unsupported method is rejected\", function () {",
 									"        pm.expect(json.responseCode).to.eql(405);",
@@ -1130,10 +1117,6 @@
 									"});",
 									"",
 									"if (!isEnvironmentIssue) {",
-									"    pm.test(\"Status code is 200\", function () {",
-									"        pm.response.to.have.status(200);",
-									"    });",
-									"",
 									"    const json = pm.response.json();",
 									"    pm.test(\"Returned products match the search term (by name OR category - confirmed via manual API exploration)\", function () {",
 									"        pm.expect(json.responseCode).to.eql(200);",
@@ -1179,10 +1162,6 @@
 									"});",
 									"",
 									"if (!isEnvironmentIssue) {",
-									"    pm.test(\"Status code is 200\", function () {",
-									"        pm.response.to.have.status(200);",
-									"    });",
-									"    ",
 									"    const json = pm.response.json();",
 									"    pm.test(\"Missing parameter is rejected\", function () {",
 									"        pm.expect(json.responseCode).to.eql(400);",
@@ -1236,7 +1215,7 @@
 									"        pm.response.to.not.have.status(500);",
 									"    });",
 									"    ",
-									"    pm.test(\"Input is not reflected unescaped in the response (basic XSS check)\", function () {",
+									"    pm.test(\"Input is not reflected unescaped in the response (lightweight input-handling check; not a comprehensive security assessment)\", function () {",
 									"        pm.expect(pm.response.text()).to.not.include(\"<script>\");",
 									"    });",
 									"}"
@@ -1273,10 +1252,6 @@
 									"});",
 									"",
 									"if (!isEnvironmentIssue) {",
-									"    pm.test(\"Status code is 200\", function () {",
-									"        pm.response.to.have.status(200);",
-									"    });",
-									"",
 									"    const json = pm.response.json();",
 									"    pm.test(\"DELETE/PUT are listed in the Allow header but not functionally supported (return 405 like any other unsupported method - the Allow header is misleading)\", function () {",
 									"        pm.expect(json.responseCode).to.eql(405);",
@@ -1316,10 +1291,6 @@
 									"});",
 									"",
 									"if (!isEnvironmentIssue) {",
-									"    pm.test(\"Status code is 200\", function () {",
-									"        pm.response.to.have.status(200);",
-									"    });",
-									"",
 									"    const json = pm.response.json();",
 									"    pm.test(\"DELETE/PUT are listed in the Allow header but not functionally supported (return 405 like any other unsupported method - the Allow header is misleading)\", function () {",
 									"        pm.expect(json.responseCode).to.eql(405);",
@@ -1359,15 +1330,151 @@
 									"});",
 									"",
 									"if (!isEnvironmentIssue) {",
-									"    pm.test(\"Status code is 200\", function () {",
-									"        pm.response.to.have.status(200);",
-									"    });",
-									"",
 									"    pm.test(\"Response describes endpoint metadata (confirmed OPTIONS behaviour, distinct from other methods)\", function () {",
 									"        const json = pm.response.json();",
 									"        pm.expect(json).to.have.property(\"name\");",
 									"        pm.expect(json).to.have.property(\"renders\");",
 									"    });",
+									"}"
+								]
+							}
+						}
+					]
+				}
+			]
+		},
+		{
+			"name": "Teardown",
+			"description": "Operational cleanup, not feature testing of deleteAccount itself. deleteAccount as a tested endpoint (its own edge cases/assertions) remains out of scope - see docs/test-strategy.md. This folder only uses it to remove accounts the Account folder created, so re-running the collection doesn't accumulate test data.",
+			"item": [
+				{
+					"name": "[Cleanup] DELETE deleteAccount - main test account",
+					"request": {
+						"method": "DELETE",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/api/deleteAccount",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"deleteAccount"
+							]
+						},
+						"body": {
+							"mode": "urlencoded",
+							"urlencoded": [
+								{
+									"key": "email",
+									"value": "{{created_account_main_email}}",
+									"type": "text"
+								},
+								{
+									"key": "password",
+									"value": "Test1234!",
+									"type": "text"
+								}
+							]
+						}
+					},
+					"event": [
+						{
+							"listen": "prerequest",
+							"script": {
+								"type": "text/javascript",
+								"exec": [
+									"// Skip if the happy-path account was never created this run (e.g. partial/failed run)",
+									"if (!pm.environment.get(\"created_account_main_email\")) {",
+									"    pm.execution.skipRequest();",
+									"}"
+								]
+							}
+						},
+						{
+							"listen": "test",
+							"script": {
+								"type": "text/javascript",
+								"exec": [
+									"const isEnvironmentIssue = pm.response.code === 302;",
+									"pm.test(\"API responded normally (not redirected)\", function () {",
+									"    pm.expect(isEnvironmentIssue).to.be.false;",
+									"});",
+									"",
+									"if (!isEnvironmentIssue) {",
+									"    const json = pm.response.json();",
+									"    pm.test(\"Main test account is deleted (cleanup)\", function () {",
+									"        pm.expect(json.responseCode).to.eql(200);",
+									"        pm.expect(json.message).to.eql(\"Account deleted!\");",
+									"    });",
+									"    pm.environment.unset(\"created_account_main_email\");",
+									"}"
+								]
+							}
+						}
+					]
+				},
+				{
+					"name": "[Cleanup] DELETE deleteAccount - boundary test account",
+					"request": {
+						"method": "DELETE",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/api/deleteAccount",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"deleteAccount"
+							]
+						},
+						"body": {
+							"mode": "urlencoded",
+							"urlencoded": [
+								{
+									"key": "email",
+									"value": "{{created_account_extra_email}}",
+									"type": "text"
+								},
+								{
+									"key": "password",
+									"value": "Test1234!",
+									"type": "text"
+								}
+							]
+						}
+					},
+					"event": [
+						{
+							"listen": "prerequest",
+							"script": {
+								"type": "text/javascript",
+								"exec": [
+									"// Skip if the boundary-test account was never created this run",
+									"if (!pm.environment.get(\"created_account_extra_email\")) {",
+									"    pm.execution.skipRequest();",
+									"}"
+								]
+							}
+						},
+						{
+							"listen": "test",
+							"script": {
+								"type": "text/javascript",
+								"exec": [
+									"const isEnvironmentIssue = pm.response.code === 302;",
+									"pm.test(\"API responded normally (not redirected)\", function () {",
+									"    pm.expect(isEnvironmentIssue).to.be.false;",
+									"});",
+									"",
+									"if (!isEnvironmentIssue) {",
+									"    const json = pm.response.json();",
+									"    pm.test(\"Boundary test account is deleted (cleanup)\", function () {",
+									"        pm.expect(json.responseCode).to.eql(200);",
+									"        pm.expect(json.message).to.eql(\"Account deleted!\");",
+									"    });",
+									"    pm.environment.unset(\"created_account_extra_email\");",
 									"}"
 								]
 							}
