@@ -1,86 +1,116 @@
 # E-commerce QA Portfolio
 
-![CI](https://github.com/<your-github-username>/ecommerce-qa-portfolio/actions/workflows/ci.yml/badge.svg)
+![CI](https://github.com/<tvuj-github-username>/ecommerce-qa-portfolio/actions/workflows/ci.yml/badge.svg)
 
-End-to-end QA portfolio demonstrating risk-based test design, manual test cases, UI
-automation (Playwright), API testing (Postman/Newman), and CI execution, using a public
-e-commerce application as the target.
+## O projektu
 
-## Highlights
+Ukázkový QA/testovací projekt postavený nad veřejně dostupným demo e-shopem
+[AutomationExercise](https://automationexercise.com). Cílem projektu je ukázat kompletní
+testovací proces od analýzy a návrhu testovacích scénářů, přes manuální test case,
+až po automatizované UI testy (Playwright) a API testy (Postman/Newman), zapojené
+do CI pipeline na GitHubu.
 
-- Risk-based test strategy (39 identified risks, prioritised by impact × likelihood)
-- 35+ manual test cases across 5 modules, each traceable to a specific risk
-- Playwright UI automation with Page Object Model
-- Postman/Newman API test suite
-- GitHub Actions CI pipeline
-- Documented exploratory testing findings, including one confirmed candidate defect
-- Explicit "tests intentionally not automated" section with reasoning
+Projekt vznikl jako doplněk k praxi v manuálním testování a testovací strategii –
+zaměřuje se hlavně na prohloubení automatizace a demonstraci end-to-end přístupu
+k zajištění kvality.
 
-```
-Risk Analysis → Test Strategy → Test Cases → Automation → CI → Reports
-```
-
-## What This Demonstrates
-
-- UI functional testing, including negative and boundary scenarios
-- API contract testing (status codes, error handling, edge-case parameter values)
-- Risk-based prioritisation and scope decisions
-- Test data management for a shared, unstable public environment
-- Exploratory testing to establish behaviour baselines before automating
-- Business-outcome assertions rather than implementation-detail checks
-
-## Application Under Test
+## Testovaná aplikace
 
 - **Web:** https://automationexercise.com
 - **API:** https://automationexercise.com/api_list
 
-Scope: registration/login, product search & filtering, cart, checkout, and the API layer
-(createAccount, verifyLogin, searchProduct, productsList). Full scope decisions and
-rationale: [`docs/test-strategy.md`](./docs/test-strategy.md).
+## Co projekt pokrývá
 
-The project intentionally focuses on business-critical workflows instead of exhaustive
-coverage of every application feature.
+- **Registrace a přihlášení** – včetně negativních scénářů (duplicitní e-mail, špatné heslo)
+- **Vyhledávání a filtrování produktů** – podle kategorie a značky
+- **Košík** – přidání, úprava množství, odebrání položek
+- **Checkout flow** – zadání adresy, dokončení objednávky
+- **API vrstva** – createAccount, verifyLogin, searchProduct, productsList
 
-## Known Limitations
+Podrobné testovací scénáře a test case najdeš ve složce [`docs/test-cases`](./docs/test-cases).
 
-- Public demo application, shared with other users — no SLA, no dedicated test environment.
-- No access to source code or backend — black-box testing only.
-- Test data (catalogue, product IDs) may change without notice.
+## API testová kolekce (Postman/Newman)
 
-## Tech Stack
+Kolekce `postman/ecommerce-api.postman_collection.json` pokrývá `createAccount`,
+`verifyLogin`, `productsList` a `searchProduct` – pozitivní, negativní i boundary scénáře,
+včetně bezpečnostních a robustness kontrol.
 
-| Layer | Tool |
+### Architektura kolekce
+
+- **Account** – createAccount a verifyLogin, včetně chained scénářů (účet se vytvoří a
+  následně se proti němu ověřuje přihlášení) a negativních/boundary případů.
+- **Product** – productsList a searchProduct, včetně kontroly Allow headeru a
+  injection-like inputu.
+- **Teardown** – po doběhnutí ostatních folderů smaže přes `deleteAccount` účty vytvořené
+  v Account folderu, aby se testovací data nehromadila mezi běhy. Jde o **operativní**
+  použití endpointu pro úklid, ne o testování `deleteAccount` jako feature – to zůstává mimo
+  scope (viz `docs/test-strategy.md`). Requesty v tomto folderu se automaticky přeskočí,
+  pokud odpovídající účet v daném běhu vůbec nevznikl (např. při částečném/neúspěšném běhu).
+- **Collection-level test** – assertion na transportní HTTP status (200) je definovaná jednou
+  na úrovni celé kolekce místo opakování v každém requestu; dva requesty, které záměrně
+  testují malformed input, jsou z této kontroly vyloučené.
+
+### Známé zvláštnosti API
+
+- **HTTP 200 i při aplikační chybě.** AutomationExercise API vrací transportní HTTP `200`
+  i v případech, kdy JSON tělo deklaruje jiný výsledek (`responseCode`). Skutečný výsledek
+  operace se proto vždy ověřuje z `responseCode`/`message` v těle odpovědi, ne z HTTP statusu.
+- **Matoucí `Allow` header.** Endpoint `productsList` uvádí v `Allow` headeru `DELETE`/`PUT`,
+  ale tyto metody funkčně nepodporuje (vrací stejné `405`, jako jakoukoliv jinou
+  nepodporovanou metodu). Zdokumentováno a otestováno přímo v kolekci.
+- **Third-party nestabilita.** Aplikace občas vrátí `302` místo očekávané odpovědi
+  (viz `docs/automation-notes.md`). Testy tuto situaci rozpoznají a odliší od skutečného
+  selhání testu.
+
+### Jak spustit
+
+```bash
+cd postman
+newman run ecommerce-api.postman_collection.json \
+    -e environments/production.postman_environment.json
+```
+
+Pro ověření opakovatelnosti (že běh nekoliduje sám se sebou díky teardownu a unikátním
+testovacím datům) lze spustit víc iterací najednou:
+
+```bash
+newman run ecommerce-api.postman_collection.json \
+    -e environments/production.postman_environment.json \
+    --iteration-count 5 \
+    --delay-request 500
+```
+
+CI (`.github/workflows/ci.yml`) spouští kolekci na každý push/PR do `main` s
+`--iteration-count 2`. Výsledky ručně spuštěných běhů s vyšším počtem iterací (Postman
+Runner i Newman CLI) jsou zdokumentované v [`docs/test-run-evidence.md`](./docs/test-run-evidence.md),
+včetně syrového Newman JSON reportu v `docs/evidence/`.
+
+## Tech stack
+
+| Vrstva | Nástroj |
 |---|---|
-| UI automation | Playwright (TypeScript) |
-| API testing | Postman / Newman |
+| UI automatizace | Playwright (TypeScript) |
+| API testy | Postman / Newman |
 | CI/CD | GitHub Actions |
-| Documentation | Markdown |
+| Testovací dokumentace | Markdown |
 
-## Repository Structure
+## Struktura repozitáře
 
 ```
 ecommerce-qa-portfolio/
 ├── docs/
-│   ├── test-strategy.md        # test strategy and approach
-│   ├── risk-analysis.md        # risk-based analysis (39 risks)
-│   ├── coverage-matrix.md      # risk → test case traceability
-│   ├── automation-notes.md     # Playwright implementation decisions
-│   ├── tests-not-automated.md  # scenarios documented but not automated, and why
-│   └── test-cases/             # test cases by module
-├── postman/                    # API collection and environments
-├── playwright/                 # UI automation (tests + Page Object Model)
-└── .github/workflows/          # CI pipeline
+│   ├── test-strategy.md       # testovací strategie a přístup
+│   ├── test-cases/            # testovací scénáře a test case po modulech
+│   ├── test-run-evidence.md   # evidence opakovatelnosti (Postman Runner + Newman CLI)
+│   └── evidence/               # syrové reporty k evidenci (např. Newman JSON)
+├── postman/                   # API kolekce a prostředí
+├── playwright/                # UI automatizace (testy + Page Object Model)
+└── .github/workflows/         # CI pipeline
 ```
 
-## Running Tests Locally
+## Jak spustit testy lokálně
 
-### Requirements
-
-- Node.js 22+
-- npm
-- Git
-
-### Playwright (UI tests)
+### Playwright (UI testy)
 
 ```bash
 cd playwright
@@ -88,7 +118,7 @@ npm install
 npx playwright test
 ```
 
-### Postman / Newman (API tests)
+### Postman / Newman (API testy)
 
 ```bash
 cd postman
@@ -96,7 +126,13 @@ npm install -g newman
 newman run ecommerce-api.postman_collection.json -e environments/production.postman_environment.json
 ```
 
-## Author
+Viz sekci [API testová kolekce](#api-testová-kolekce-postmannewman) výše pro architekturu
+kolekce, známé zvláštnosti testované aplikace a spuštění s více iteracemi.
 
-**Tomáš Koudelka**
+## Autor
+
+**Tomáš Koudelka** – Senior QA Tester / Test Analyst
 [LinkedIn](https://linkedin.com/in/tomas-koudelka-a95aab88/)
+
+Tento projekt vznikl jako praktická ukázka k profilu a jako prostor pro prohloubení
+znalostí testovací automatizace nad rámec dosavadní praxe.
