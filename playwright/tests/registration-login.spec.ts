@@ -3,6 +3,9 @@ import { SignupPage } from '../pages/SignupPage';
 import { AccountInfoPage } from '../pages/AccountInfoPage';
 import { LoginPage } from '../pages/LoginPage';
 import { NavBar } from '../pages/components/NavBar';
+import { ProductsPage } from '../pages/ProductsPage';
+import { CartPage } from '../pages/CartPage';
+import { CheckoutPage } from '../pages/CheckoutPage';
 
 test.describe('Registration & Login', () => {
   test('TC-LOGIN-001 - user can register with valid data', async ({ page }) => {
@@ -113,5 +116,184 @@ test.describe('Registration & Login', () => {
     // form heading is the actual proxy for "no new account."
     await expect(signupPage.errorMessage()).toBeVisible();
     await expect(new AccountInfoPage(page).accountInfoHeading()).toBeHidden();
+  });
+
+  // --- TC-LOGIN-006: Email format validation ---
+  // Confirmed baseline (docs/automation-notes.md, 2026-07-24): all four values are
+  // rejected by the browser's native type="email" + required constraint validation
+  // before the form ever reaches the server - so there is no app-level error to
+  // assert on here, only the absence of a submit.
+  const invalidEmails = ['test', 'test@', 'test@@test.com', ''];
+  for (const value of invalidEmails) {
+    test(`TC-LOGIN-006 - email "${value || '(empty)'}" is rejected client-side, form not submitted`, async ({ page }) => {
+      await page.goto('/login');
+      const emailInput = page.getByTestId('signup-email');
+      await page.getByTestId('signup-name').fill('QA Email Format');
+      await emailInput.fill(value);
+      await page.getByTestId('signup-button').click();
+
+      // Native constraint validation blocks the submit - still on /login,
+      // the account-info form never appears.
+      await expect(page).toHaveURL(/\/login$/);
+      const isValid = await emailInput.evaluate((el: HTMLInputElement) => el.checkValidity());
+      expect(isValid).toBe(false);
+    });
+  }
+
+  // --- TC-LOGIN-007: Password field boundary values ---
+  // Confirmed baseline (docs/automation-notes.md, 2026-07-24): only `required` is
+  // enforced client-side; the server enforces no min/max length at all.
+  test('TC-LOGIN-007 - empty password is blocked client-side, account not created', async ({ page }) => {
+    const timestamp = Date.now();
+    const email = `qa.pwempty.${timestamp}@test.com`;
+    const signupPage = new SignupPage(page);
+    const accountInfoPage = new AccountInfoPage(page);
+
+    await page.goto('/login');
+    await signupPage.signup('QA Pw Empty', email);
+
+    // Leave password empty, fill everything else, try to submit.
+    await page.locator('#first_name').fill('QA');
+    await page.locator('#last_name').fill('PwEmpty');
+    await page.locator('#address1').fill('Test Street 1');
+    await page.locator('#state').fill('Praha');
+    await page.locator('#city').fill('Praha');
+    await page.locator('#zipcode').fill('10000');
+    await page.locator('#mobile_number').fill('123456789');
+    await accountInfoPage.createAccount();
+
+    // Native `required` blocks the submit - still on the account-info form.
+    await expect(accountInfoPage.accountInfoHeading()).toBeVisible();
+  });
+
+  const acceptedPasswords = [
+    { label: 'single-character', value: 'a' },
+    { label: '220-character', value: 'a'.repeat(220) },
+  ];
+  for (const { label, value } of acceptedPasswords) {
+    test(`TC-LOGIN-007 - ${label} password is accepted, account created`, async ({ page }) => {
+      const timestamp = Date.now();
+      const email = `qa.pwboundary.${timestamp}@test.com`;
+      const signupPage = new SignupPage(page);
+      const accountInfoPage = new AccountInfoPage(page);
+
+      await page.goto('/login');
+      await signupPage.signup('QA Pw Boundary', email);
+      await accountInfoPage.fillAccountInfo({
+        password: value,
+        firstName: 'QA',
+        lastName: 'PwBoundary',
+        address1: 'Test Street 1',
+        state: 'Praha',
+        city: 'Praha',
+        zipcode: '10000',
+        mobileNumber: '123456789',
+      });
+      await accountInfoPage.createAccount();
+
+      // No server-side length limit either direction - confirmed baseline.
+      await expect(accountInfoPage.accountCreatedHeading()).toBeVisible();
+    });
+  }
+
+  // --- TC-LOGIN-009: Double-submit on "Create Account" ---
+  test('TC-LOGIN-009 - double-clicking Create Account creates exactly one account', async ({ page }) => {
+    const timestamp = Date.now();
+    const email = `qa.dblsubmit.${timestamp}@test.com`;
+    const signupPage = new SignupPage(page);
+    const accountInfoPage = new AccountInfoPage(page);
+
+    await page.goto('/login');
+    await signupPage.signup('QA Double Submit', email);
+    await accountInfoPage.fillAccountInfo({
+      password: 'Test1234!',
+      firstName: 'QA',
+      lastName: 'DblSubmit',
+      address1: 'Test Street 1',
+      state: 'Praha',
+      city: 'Praha',
+      zipcode: '10000',
+      mobileNumber: '123456789',
+    });
+
+    let signupResponseCount = 0;
+    page.on('response', (res) => {
+      if (res.url().endsWith('/signup')) signupResponseCount++;
+    });
+
+    // locator.click() waits for actionability, which can't represent a real
+    // rapid double-click (the second call ends up waiting for a button that
+    // navigation just removed). Two native clicks dispatched synchronously
+    // inside one evaluate() is what actually reproduces it - confirmed
+    // approach from the exploration script, see docs/automation-notes.md.
+    await page.evaluate(() => {
+      const btn = document.querySelector('[data-qa="create-account"]') as HTMLButtonElement;
+      btn.click();
+      btn.click();
+    });
+
+    await expect(accountInfoPage.accountCreatedHeading()).toBeVisible();
+    expect(signupResponseCount).toBe(1);
+  });
+
+  // --- TC-LOGIN-005: Session drops during an active purchase ---
+  // Confirmed baseline (docs/automation-notes.md, 2026-07-24; BUG-002): the app does
+  // NOT redirect to login on session drop. Checkout renders directly with a silently
+  // empty cart instead. This test documents that actual (buggy) behaviour, not the
+  // originally-assumed one - see docs/bug-reports/session-drop-silent-empty-checkout.md.
+  test('TC-LOGIN-005 - session drop mid-purchase silently empties checkout instead of prompting re-auth', async ({
+    page,
+    context,
+    registeredUser,
+  }) => {
+    const navBar = new NavBar(page);
+    const productsPage = new ProductsPage(page);
+    const cartPage = new CartPage(page);
+    const checkoutPage = new CheckoutPage(page);
+
+    await productsPage.goto();
+    await productsPage.addFirstProductToCart();
+    await cartPage.goto();
+    await expect(cartPage.getItemQuantity()).resolves.toContain('1');
+
+    // Simulate the session dropping mid-purchase.
+    await context.clearCookies();
+
+    await cartPage.proceedToCheckout();
+
+    // BUG-002: no redirect to /login happens.
+    await expect(page).toHaveURL(/\/checkout$/);
+    // Navbar reflects the logged-out state...
+    await expect(navBar.loggedInAsText()).toBeHidden();
+    // ...but the checkout page itself gives no explicit warning: it just
+    // renders with an empty order instead of the item added above.
+    await expect(checkoutPage.orderItemRows()).toHaveCount(0);
+    await expect(page.getByText('Rs. 0')).toBeVisible();
+  });
+
+  // --- TC-LOGIN-010: Session state across concurrent tabs ---
+  test('TC-LOGIN-010 - logging out in one tab is reflected in another after reload', async ({
+    page,
+    context,
+    registeredUser,
+  }) => {
+    const navBarTabA = new NavBar(page);
+
+    // Tab B: same browser context, so it shares the session cookie set up by
+    // the registeredUser fixture on Tab A.
+    const pageB = await context.newPage();
+    await pageB.goto('/');
+    const navBarTabB = new NavBar(pageB);
+    await expect(navBarTabB.loggedInAsText()).toContainText(registeredUser.name);
+
+    // Logout on Tab A.
+    await navBarTabA.logout();
+
+    // Tab B hasn't reloaded yet - the point of this test is what happens
+    // once it does.
+    await pageB.reload();
+    await expect(navBarTabB.loggedInAsText()).toBeHidden();
+
+    await pageB.close();
   });
 });

@@ -1,0 +1,68 @@
+{
+  "TC-LOGIN-006": {
+    "inputType": "email",
+    "required": true,
+    "results": [
+      {
+        "value": "test",
+        "valid": false,
+        "validationMessage": "Do e-mailové adresy zahrňte znak @. V adrese test chybí znak @."
+      },
+      {
+        "value": "test@",
+        "valid": false,
+        "validationMessage": "Zadejte část za znakem @. Adresa test@ není úplná."
+      },
+      {
+        "value": "test@@test.com",
+        "valid": false,
+        "validationMessage": "Část za znakem @ nesmí obsahovat znak @."
+      },
+      {
+        "value": "",
+        "valid": false,
+        "validationMessage": "Vyplňte prosím toto pole."
+      }
+    ]
+  },
+  "TC-LOGIN-007-empty": {
+    "passwordFieldAttrs": {
+      "type": "password",
+      "required": true,
+      "minLength": -1,
+      "maxLength": -1,
+      "pattern": ""
+    },
+    "urlAfterSubmitAttempt": "https://automationexercise.com/signup",
+    "stillOnAccountInfoForm": true
+  },
+  "TC-LOGIN-007-single-char": {
+    "email": "qa.explore.pw.short.1784929722988@test.com",
+    "finalUrl": "https://automationexercise.com/account_created",
+    "accountCreatedShown": true
+  },
+  "TC-LOGIN-007-long": {
+    "email": "qa.explore.pw.long.1784929725541@test.com",
+    "passwordLength": 220,
+    "finalUrl": "https://automationexercise.com/account_created",
+    "accountCreatedShown": true
+  },
+  "TC-LOGIN-009": {
+    "email": "qa.explore.dblsubmit.1784929728689@test.com",
+    "finalUrl": "https://automationexercise.com/account_created",
+    "accountCreatedShown": true,
+    "capturedResponses": [
+      {
+        "url": "https://automationexercise.com/signup",
+        "status": 302
+      }
+    ]
+  },
+  "TC-LOGIN-005": {
+    "email": "qa.explore.sessiondrop.1784929732077@test.com",
+    "cartQtyBeforeDrop": "\n\t\t\t\t\t\t\t\t1\n\t\t\t\t\t\t\t",
+    "urlAfterCheckoutAttempt": "https://automationexercise.com/checkout",
+    "redirectedToLogin": false,
+    "pageHeadingSnippet": " Home\n Products\n Cart\n Signup / Login\n Test Cases\n API Testing\n Video Tutorials\n Contact us\nHome Checkout\nAddress Details\nYour delivery address\n.\nYour billing address\n.\nReview Your Order\nItem\tDescription\tPrice\tQuantity\tTotal\t\n\t\t\nTotal Amount\n\t\n\nRs. 0\n\nIf you would like to add a comment about your o"
+  }
+}

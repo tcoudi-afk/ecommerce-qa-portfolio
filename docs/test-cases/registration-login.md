@@ -52,8 +52,12 @@
 - **Data:** Valid account; invalidated session token/cookie.
 - **Steps:** Log in, add a product to the cart, invalidate the session, attempt to proceed
   to checkout.
-- **Expected Result:** User is redirected to login; after re-authenticating, the cart
-  contents are preserved (cart is tied to the account — confirmed, see R-17).
+- **Expected Result:** **Confirmed (2026-07-24, Playwright exploration — see
+  `docs/exploration/findings-005-006-007-009.json`):** the app does **not** redirect to
+  login. `/checkout` renders directly; the navbar reflects the logged-out state
+  ("Signup / Login"), but the order review shows no line items and Total Amount **Rs. 0** —
+  the cart is silently emptied with no warning to the user that their session dropped. See
+  `docs/bug-reports/session-drop-silent-empty-checkout.md` (BUG-002).
 - **Tags:** `@edge-case` `@high` `@session`
 
 ## TC-LOGIN-006 — Email format validation
@@ -64,6 +68,10 @@
 - **Data:** Invalid formats: `test`, `test@`, `test@@test.com`, empty string.
 - **Steps:** Submit the signup form with each invalid value (data-driven).
 - **Expected Result:** Form is not submitted; a validation error is shown for each case.
+  **Confirmed (2026-07-24):** all four values are rejected by the browser's native
+  `type="email"` + `required` constraint validation — the form never reaches the server, so
+  no app-level error message is ever shown for this case (the visible error is the browser's
+  own validation UI, not application text).
 - **Tags:** `@boundary` `@medium` `@registration`
 
 ## TC-LOGIN-007 — Password field boundary values
@@ -75,7 +83,11 @@
 - **Steps:** Submit the signup form with each value (data-driven).
 - **Expected Result:** Behaviour is documented as a baseline for whichever values are
   rejected/accepted — the site does not document password rules, so this test also serves to
-  establish what the actual minimum requirement is.
+  establish what the actual minimum requirement is. **Confirmed (2026-07-24):** empty
+  password is blocked client-side only (native `required`, no `minLength`/`pattern` on the
+  field) — it never reaches the server. A single-character password and a 220-character
+  password are both accepted and the account is created; the site enforces no minimum or
+  maximum password length server-side.
 - **Tags:** `@boundary` `@medium` `@registration`
 
 ## TC-LOGIN-008 — Logout
@@ -99,7 +111,8 @@
 - **Data:** Randomly generated unique email.
 - **Steps:** Fill in the signup form, click "Create Account" twice in rapid succession.
 - **Expected Result:** Exactly one account is created; no duplicate-request error surfaces to
-  the user.
+  the user. **Confirmed (2026-07-24):** two native clicks fired synchronously on the submit
+  button produced exactly one `POST /signup`; only one account was created.
 - **Tags:** `@edge-case` `@medium` `@registration`
 
 ## TC-LOGIN-010 — Session state across concurrent tabs
