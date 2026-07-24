@@ -9,7 +9,11 @@ stay technology-independent and readable outside a Playwright context.
   avoids collisions between parallel CI runs and removes dependency on manual cleanup.
 - Where a test needs an existing account (e.g. TC-LOGIN-003, TC-CART-003), create it via the
   `createAccount` API in a setup step rather than through the UI — faster, less flaky, and
-  independent of the registration flow being tested elsewhere.
+  independent of the registration flow being tested elsewhere. **Exception: Playwright UI
+  tests use UI setup (signup flow) instead**, because the ~40-60% HTTP 302 rate on this API
+  (see below) would make an unrelated UI test flaky for a reason that has nothing to do with
+  what it's actually testing. The Postman/API layer keeps API setup, since retry handling for
+  the 302 issue already lives there at the collection/Newman level.
 - Expected search results (TC-SEARCH-001, TC-API-009) are computed dynamically from
   `GET /api/productsList` in the test setup, not hardcoded — resilient to catalogue changes
   on the shared demo environment.
@@ -53,6 +57,20 @@ failure: check `pm.response.code === 302` first; if true, fail one clearly-label
 than letting several unrelated assertions fail with confusing, unrelated messages. Actual
 retry logic lives at the CI/Newman level, not duplicated into every test script — see
 `.github/workflows/ci.yml`.
+
+## Third-Party Overlays (UI layer)
+
+AutomationExercise loads Google Funding Choices (CMP for cookie consent), which renders a
+`fc-consent-root` overlay that intercepts pointer events on elements underneath it —
+observed blocking clicks on the signup button on `/login` (TC-LOGIN-002 setup step).
+
+The CMP is not part of the SUT and is out of scope for this portfolio. Handled once, at the
+network level, via an auto-fixture (`playwright/fixtures/test.ts`) that aborts requests to
+`fundingchoicesmessages.google.com` for every test — rather than a conditional "dismiss if
+visible" step in each test, which would itself be a source of flakiness (the banner doesn't
+always render in time to be dismissed). Trade-off: tests run in an environment slightly
+different from what a real user sees. If consent-banner behaviour were ever business-critical
+for this SUT, it would need its own dedicated test rather than being silently blocked here.
 
 ## Confirmed Baselines (from manual exploration, 2026-07-22)
 
