@@ -5,7 +5,7 @@ export class NavBar {
 
   private cartLink = () => this.page.getByRole('link', { name: 'Cart' });
   private logoutLink = () => this.page.getByRole('link', { name: 'Logout' });
-  private loggedInAsText = () => this.page.getByText(/Logged in as/);
+  loggedInAsText = () => this.page.getByText(/Logged in as/);
 
   async goToCart() {
     await this.cartLink().click();

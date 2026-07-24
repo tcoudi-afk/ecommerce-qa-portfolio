@@ -5,17 +5,10 @@ import { LoginPage } from '../pages/LoginPage';
 import { NavBar } from '../pages/components/NavBar';
 
 test.describe('Registration & Login', () => {
-  test('TC-LOGIN-002 - user can log in with valid credentials', async ({ page }) => {
-    // --- Setup: create an account through the UI signup flow ---
-    // Done via UI, not the createAccount API, even though automation-notes.md
-    // generally prefers API setup. Reason: on this shared demo environment the API
-    // returns HTTP 302 instead of JSON on ~40-60% of calls (see automation-notes.md).
-    // A UI test's setup step failing because of unrelated API flakiness would be a
-    // worse trade-off here than the extra setup time of going through the UI.
+  test('TC-LOGIN-001 - user can register with valid data', async ({ page }) => {
     const timestamp = Date.now();
-    const name = `POM Tester ${timestamp}`;
-    const email = `qa.pom.${timestamp}@test.com`;
-    const password = 'Test1234!';
+    const name = `POM Register ${timestamp}`;
+    const email = `qa.register.${timestamp}@test.com`;
 
     const signupPage = new SignupPage(page);
     const accountInfoPage = new AccountInfoPage(page);
@@ -24,9 +17,9 @@ test.describe('Registration & Login', () => {
     await page.goto('/login');
     await signupPage.signup(name, email);
     await accountInfoPage.fillAccountInfo({
-      password,
+      password: 'Test1234!',
       firstName: 'POM',
-      lastName: 'Tester',
+      lastName: 'Register',
       address1: 'Test Street 1',
       state: 'Praha',
       city: 'Praha',
@@ -34,10 +27,25 @@ test.describe('Registration & Login', () => {
       mobileNumber: '123456789',
     });
     await accountInfoPage.createAccount();
+
+    // Expected Result (TC-LOGIN-001): "Account Created!" confirmation is displayed.
+    await expect(accountInfoPage.accountCreatedHeading()).toBeVisible();
+
     await accountInfoPage.continueAfterAccountCreated();
 
-    // Signup logs the user in automatically. TC-LOGIN-002 is specifically about the
-    // login form, so log out first to get a clean starting point for the real test.
+    // Expected Result: user is logged in; header shows the user's name.
+    await expect(page).toHaveURL('/');
+    const loggedInText = await navBar.getLoggedInUserText();
+    expect(loggedInText).toContain(`Logged in as ${name}`);
+  });
+
+  test('TC-LOGIN-002 - user can log in with valid credentials', async ({ page, registeredUser }) => {
+    const { name, email, password } = registeredUser;
+    const navBar = new NavBar(page);
+
+    // registeredUser fixture leaves the browser logged in (that's how the
+    // app behaves right after signup). TC-LOGIN-002 is specifically about
+    // the login form, so log out first to get a clean starting point.
     await navBar.logout();
 
     // --- TC-LOGIN-002: Successful login with valid credentials ---
@@ -50,5 +58,60 @@ test.describe('Registration & Login', () => {
     await expect(page).toHaveURL('/');
     const loggedInText = await navBar.getLoggedInUserText();
     expect(loggedInText).toContain(`Logged in as ${name}`);
+  });
+
+  test('TC-LOGIN-008 - user can log out', async ({ page, registeredUser }) => {
+    const navBar = new NavBar(page);
+
+    // registeredUser fixture leaves the browser logged in.
+    await navBar.logout();
+
+    await expect(page).toHaveURL('/login');
+    await expect(navBar.loggedInAsText()).toBeHidden();
+
+    // Logged-out state must persist on navigation, not just on /login.
+    await navBar.goToCart();
+    await expect(navBar.loggedInAsText()).toBeHidden();
+  });
+
+  test('TC-LOGIN-004 - login with an incorrect password is rejected', async ({ page, registeredUser }) => {
+    const { email } = registeredUser;
+    const navBar = new NavBar(page);
+
+    // registeredUser fixture leaves the browser logged in; this test needs
+    // a logged-out starting point to submit the login form.
+    await navBar.logout();
+
+    const loginPage = new LoginPage(page);
+    await loginPage.goto();
+    await loginPage.login(email, 'WrongPassword123!');
+
+    // Expected Result (docs/test-cases/registration-login.md): error shown,
+    // user remains logged out. Both are asserted explicitly per
+    // docs/automation-notes.md — checking only the error text would miss a
+    // false positive where the app somehow still logs the user in.
+    await expect(loginPage.errorMessage()).toBeVisible();
+    await expect(navBar.loggedInAsText()).toBeHidden();
+  });
+
+  test('TC-LOGIN-003 - registration with an already-registered email is rejected', async ({ page, registeredUser }) => {
+    const { email } = registeredUser;
+    const navBar = new NavBar(page);
+
+    // registeredUser fixture leaves the browser logged in; go through the
+    // same logged-out starting point as the other negative-path tests.
+    await navBar.logout();
+
+    const signupPage = new SignupPage(page);
+    await page.goto('/login');
+    await signupPage.signup('Duplicate Attempt', email);
+
+    // Expected Result (docs/test-cases/registration-login.md): error shown;
+    // no new account is created. NOT checked via URL — confirmed live that
+    // this app redirects to /signup on both outcomes, so URL can't
+    // distinguish success from rejection here. Absence of the account-info
+    // form heading is the actual proxy for "no new account."
+    await expect(signupPage.errorMessage()).toBeVisible();
+    await expect(new AccountInfoPage(page).accountInfoHeading()).toBeHidden();
   });
 });

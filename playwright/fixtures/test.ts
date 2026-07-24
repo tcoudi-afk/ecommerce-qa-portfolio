@@ -1,4 +1,6 @@
 import { test as base } from '@playwright/test';
+import { SignupPage } from '../pages/SignupPage';
+import { AccountInfoPage } from '../pages/AccountInfoPage';
 
 /**
  * Domény třetích stran blokované ve všech testech.
@@ -21,8 +23,21 @@ const BLOCKED_URL_PATTERNS = [
   '**://fundingchoicesmessages.google.com/**',
 ];
 
+/**
+ * Data účtu vytvořeného fixture `registeredUser`. Heslo je součástí, protože
+ * ho testy potřebují zpátky pro přihlášení (TC-LOGIN-002, TC-LOGIN-004) —
+ * appka samotná ho po vytvoření účtu nikam nevrací, takže jinak by nebylo
+ * odkud ho vzít.
+ */
+type RegisteredUser = {
+  name: string;
+  email: string;
+  password: string;
+};
+
 type Fixtures = {
   blockThirdPartyOverlays: void;
+  registeredUser: RegisteredUser;
 };
 
 export const test = base.extend<Fixtures>({
@@ -36,6 +51,49 @@ export const test = base.extend<Fixtures>({
     },
     { auto: true },
   ],
+
+  /**
+   * Vytvoří nový účet přes UI signup flow a testu vrátí jeho přihlašovací
+   * údaje. Narozdíl od `blockThirdPartyOverlays` NENÍ `auto: true` — spustí
+   * se jen v testech, které si o `registeredUser` řeknou destrukturováním
+   * (`{ page, registeredUser }`), protože TC-LOGIN-001 testuje přesně tenhle
+   * flow a nesmí ho dostat „zdarma“ jako cizí setup.
+   *
+   * Přes UI, ne přes createAccount API — stejný důvod jako v
+   * docs/automation-notes.md: ~40-60% HTTP 302 rate by dělal setup flaky
+   * z důvodu, který nemá nic společného s testovanou funkcionalitou.
+   *
+   * Po doběhnutí je uživatel přihlášený (appka po registraci loguje
+   * automaticky) — testy, které potřebují odhlášený stav (TC-LOGIN-002,
+   * TC-LOGIN-004), si musí zavolat navBar.logout() samy na začátku těla
+   * testu, fixture to za ně neřeší.
+   */
+  registeredUser: async ({ page }, use) => {
+    const timestamp = Date.now();
+    const name = `POM Tester ${timestamp}`;
+    const email = `qa.pom.${timestamp}@test.com`;
+    const password = 'Test1234!';
+
+    const signupPage = new SignupPage(page);
+    const accountInfoPage = new AccountInfoPage(page);
+
+    await page.goto('/login');
+    await signupPage.signup(name, email);
+    await accountInfoPage.fillAccountInfo({
+      password,
+      firstName: 'POM',
+      lastName: 'Tester',
+      address1: 'Test Street 1',
+      state: 'Praha',
+      city: 'Praha',
+      zipcode: '10000',
+      mobileNumber: '123456789',
+    });
+    await accountInfoPage.createAccount();
+    await accountInfoPage.continueAfterAccountCreated();
+
+    await use({ name, email, password });
+  },
 });
 
 export { expect } from '@playwright/test';

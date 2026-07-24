@@ -93,3 +93,15 @@ automated assertions:
   supported methods, but DELETE and PUT both return the same `405` as any genuinely
   unsupported method — the `Allow` header does not accurately reflect functional support.
   OPTIONS returns endpoint metadata (name, accepted content types), not a 405.
+
+## Confirmed Baselines (from automated test runs, 2026-07-24)
+
+Found while writing Playwright tests, not from a separate manual exploration pass — kept as
+a distinct section so the provenance stays honest.
+
+- Submitting the signup form redirects to `/signup` regardless of whether the email is new
+  or already registered — the URL is identical for both outcomes. Surfaced when TC-LOGIN-003
+  initially asserted `toHaveURL('/login')` on the duplicate-email path and failed against the
+  live app: the page actually stayed on `/signup`, distinguished only by page content (the
+  account-info form vs. the error message), not the URL. Fixed by asserting on the
+  account-info form heading (`AccountInfoPage.accountInfoHeading`) instead.
