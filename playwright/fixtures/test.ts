@@ -18,9 +18,18 @@ import { AccountInfoPage } from '../pages/AccountInfoPage';
  * Trade-off: testy tím běží v jiném prostředí než reálný uživatel. Kdyby byl
  * consent flow business-critical, patřil by mu vlastní dedikovaný test —
  * ne tichá blokace napříč celou sadou.
+ *
+ * Rozšířeno 2026-07-26 o pagead2.googlesyndication.com a *.doubleclick.net
+ * (Google reklamní síť) - původně blokováno jen v throwaway exploračních
+ * skriptech, ne tady, což způsobilo dva reálné CI selhány (konzistentně 3/3
+ * pokusů, ne flaky): reklamní text unikl do `getProductNames()`
+ * (TC-SEARCH-005) a reklamní `POST /pagead/ping` prohodil network-level
+ * assertion o tom, že žádný POST nefiruje při reloadu (TC-CHECKOUT-006).
  */
 const BLOCKED_URL_PATTERNS = [
   '**://fundingchoicesmessages.google.com/**',
+  '**://pagead2.googlesyndication.com/**',
+  '**://*.doubleclick.net/**',
 ];
 
 /**

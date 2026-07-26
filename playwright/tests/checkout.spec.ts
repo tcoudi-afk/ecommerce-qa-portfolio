@@ -176,7 +176,13 @@ test.describe('Checkout', () => {
 
     let postRequestFiredOnReload = false;
     page.on('request', (req) => {
-      if (req.method() === 'POST') {
+      // Scoped to the app's own origin - defense-in-depth beyond the
+      // ad-domain blocking in fixtures/test.ts, after a real CI failure
+      // (2026-07-26) where an unrelated third-party POST
+      // (pagead2.googlesyndication.com/pagead/ping) tripped this exact
+      // assertion. Ad blocking is the primary fix; this scoping means a
+      // future unblocked third party can't cause the same false failure.
+      if (req.method() === 'POST' && req.url().includes('automationexercise.com')) {
         postRequestFiredOnReload = true;
       }
     });

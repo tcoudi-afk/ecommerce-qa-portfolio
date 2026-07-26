@@ -184,6 +184,37 @@ not part of the committed suite).
 - **TC-CHECKOUT-006:** reloading the confirmation page (`/payment_done/{orderId}`) fires no
   POST at all — order id is baked into the URL path, reload is inherently safe.
   Raw data: `docs/exploration/findings-checkout.json`.
+
+## CI failure (2026-07-26): ad network domains missing from the shared fixture
+
+First real CI run of the Playwright job (`ui-tests` in `.github/workflows/ci.yml`) failed 2
+of 41 tests, consistently across all 3 retries (not flaky) — both traced back to the same
+root cause: `playwright/fixtures/test.ts` only ever blocked the Funding Choices CMP domain.
+The ad network domains (`pagead2.googlesyndication.com`, `*.doubleclick.net`) were blocked in
+the throwaway `_explore-*.spec.ts` scripts used during today's investigation, but that
+blocking was never carried over into the shared fixture used by the actual committed suite.
+
+- **TC-SEARCH-005** failed on `expect(namesAfter).toEqual(namesBefore)`: one product's name
+  differed between the before/after reload snapshots (e.g. "...BLUE**Men's T-Shirts**" vs
+  "...BLUE**T-Shirt Printing Service**", changing on every retry) — ad-injected text was
+  leaking into `ProductsPage.getProductNames()`'s locator, not a real category-filter defect.
+- **TC-CHECKOUT-006** failed on `expect(postRequestFiredOnReload).toBe(false)`: an unscoped
+  `page.on('request')` listener caught `POST pagead2.googlesyndication.com/pagead/ping` and
+  mistook it for the app resubmitting the order on reload.
+
+**Fix:** added `pagead2.googlesyndication.com` and `*.doubleclick.net` to
+`playwright/fixtures/test.ts`'s `BLOCKED_URL_PATTERNS` (previously only had the CMP domain),
+so every test gets this protection automatically — not just the throwaway exploration
+scripts. Also scoped TC-CHECKOUT-006's request listener to `automationexercise.com` as
+defense-in-depth, so an unblocked third party can't trip that specific assertion again even
+if the domain list is ever incomplete.
+
+**Why this passed locally but failed in CI:** most plausibly ads simply didn't fire during
+the local runs (ad delivery is inherently non-deterministic — network/region/timing dependent),
+while the CI runner's network path triggered them consistently. This is exactly why the
+exploration scripts' network-level tracing methodology matters: an end-state check that
+happens to pass locally can still be silently relying on an environment detail (ads not
+firing) that isn't guaranteed anywhere else, including CI.
 - **TC-SEARCH-005 correction:** the pre-existing "Confirmed" note for this test case (filter
   lost on reload) did not hold up. Category filtering is a URL-addressed page
   (`/category_products/{id}`), so F5 correctly shows the same category again — there's no
