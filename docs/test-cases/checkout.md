@@ -10,6 +10,10 @@
   submit fictitious payment details → confirm.
 - **Expected Result:** An order-confirmation message is displayed and the user is
   redirected to a confirmation page.
+  **Confirmed (2026-07-26, Playwright exploration — see `docs/exploration/findings-checkout.json`):**
+  "Place Order" navigates to `/payment` (address review + payment form), and after submitting
+  payment the user lands on `/payment_done/{orderId}` with heading **"Order Placed!"** and
+  message **"Congratulations! Your order has been confirmed!"**
 - **Tags:** `@smoke` `@critical` `@checkout`
 
 ## TC-CHECKOUT-002 — Checkout with an empty cart
@@ -21,16 +25,31 @@
   navigation to the checkout URL without going through the UI.
 - **Expected Result:** Checkout cannot be completed — either the action is unavailable or a
   clear "cart is empty" message is shown, including via direct URL access.
+  **Confirmed (2026-07-26, Playwright exploration — see `docs/exploration/findings-checkout.json`):**
+  half right. Via the UI, `/view_cart` correctly shows "Cart is empty! Click here to buy
+  products." with no checkout control present at all — not disabled, entirely absent. **But
+  direct navigation to `/checkout` bypasses this entirely**: the page renders normally with
+  full address details, an empty order review, Total Amount Rs. 0, and a fully functional
+  "Place Order" link. See `docs/bug-reports/empty-cart-checkout-direct-url.md` (BUG-003).
 - **Tags:** `@negative` `@medium` `@checkout`
 
-## TC-CHECKOUT-003 — Order appears in order history
+## TC-CHECKOUT-003 — No order history page exists
 
-- **Objective:** Verify a completed order is visible afterwards.
+- **Objective:** Document that there is no order history / past-orders page reachable after
+  checkout, since the original premise of this test case doesn't hold on this site.
 - **Risk:** R-22
 - **Preconditions:** Completed order (from TC-CHECKOUT-001).
-- **Steps:** Navigate to the order history / account profile page.
-- **Expected Result:** The new order is listed with correct items and total.
-- **Tags:** `@functional` `@medium` `@checkout`
+- **Steps:** After completing an order, inspect every nav link for anything that could be an
+  order history or account/profile page.
+- **Expected Result:** **Confirmed (2026-07-26, Playwright exploration — see
+  `docs/exploration/findings-checkout.json`):** no such page exists. The full nav after a
+  completed order is: Home, Products, Cart, Logout, Delete Account, Test Cases, API Testing,
+  Video Tutorials, Contact us — plus, only on the confirmation page itself, "Download
+  Invoice" and "Continue" (both scoped to that one order, not a persistent history). There is
+  no "My Orders"/"Order History" link anywhere. This test now documents that absence instead
+  of navigating to a page that doesn't exist — same treatment as TC-SEARCH-003 and
+  TC-CART-001 earlier today.
+- **Tags:** `@edge-case` `@low` `@checkout`
 
 ## TC-CHECKOUT-004 — Quantity adjustment on the checkout page
 
@@ -43,14 +62,23 @@
   the product page before adding to the cart.
 - **Tags:** `@edge-case` `@medium` `@checkout`
 
-## TC-CHECKOUT-005 — Double-submit on "Place Order"
+## TC-CHECKOUT-005 — Double-submit on the actual order-creating step
 
-- **Objective:** Verify rapid double-clicking "Place Order" doesn't create duplicate orders.
+- **Objective:** Verify rapid double-clicking the control that actually creates the order
+  doesn't create duplicate orders.
 - **Risk:** R-24
-- **Preconditions:** Logged-in user, product in cart, on the final checkout step.
-- **Steps:** Click "Place Order" twice in rapid succession.
+- **Preconditions:** Logged-in user, product in cart, on the Payment page (`/payment`).
+- **Steps:** Click "Pay and Confirm Order" twice in rapid succession.
 - **Expected Result:** Exactly one order is created; no duplicate order appears in order
   history.
+  **Correction (2026-07-26, Playwright exploration — see
+  `docs/exploration/findings-checkout.json`):** "Place Order" (on the cart/checkout step) is
+  just a plain `<a href="/payment">` navigation link, not a submit action — it cannot itself
+  create a duplicate order no matter how many times it's clicked. The real order-creating
+  step is the Payment page's `data-qa="pay-button"`, inside a `<form method="POST"
+  action="/payment">`. This test targets that button, not the literal "Place Order" link.
+  **Confirmed:** two native clicks fired synchronously on the pay button produced exactly one
+  `POST /payment` in the network trace; no duplicate order was created in this trial.
 - **Tags:** `@edge-case` `@high` `@checkout`
 
 ## TC-CHECKOUT-006 — Refresh after order confirmation
@@ -61,4 +89,8 @@
 - **Steps:** Reload the confirmation page (F5).
 - **Expected Result:** No duplicate order is created; order history still shows exactly one
   order.
+  **Confirmed (2026-07-26, Playwright exploration — see `docs/exploration/findings-checkout.json`):**
+  no POST request fired on reload at all — the confirmation URL
+  (`/payment_done/{orderId}`) already bakes the order id into the path, so a reload is just a
+  GET/display, inherently safe from resubmission.
 - **Tags:** `@edge-case` `@high` `@checkout`

@@ -1,0 +1,187 @@
+{
+  "TC-CHECKOUT-001": {
+    "objective": "Verify the full order flow end-to-end, and verify every CheckoutPage.ts/PaymentPage.ts locator against the real site",
+    "checkoutPage": {
+      "placeOrderLinkLocator_getByRole": {
+        "found": true,
+        "outerHTML": "<a href=\"/payment\" class=\"btn btn-default check_out\">Place Order</a>"
+      },
+      "placeOrderFallback_getByText": null,
+      "bodyTextSnippet": " Home\n Products\n Cart\n Logout\n Delete Account\n Test Cases\n API Testing\n Video Tutorials\n Contact us\n Logged in as POM Tester 1785087335031\nHome Checkout\nAddress Details\nYOUR DELIVERY ADDRESS\n. POM Tester\nTest Street 1\nPraha Praha 10000\nIndia\n123456789\nYOUR BILLING ADDRESS\n. POM Tester\nTest Street 1\nPraha Praha 10000\nIndia\n123456789\nReview Your Order\nItem\tDescription\tPrice\tQuantity\tTotal\t\n\nFancy Green Top\n\nWomen > Tops\n\n\t\n\nRs. 700\n\n\t1\t\n\nRs. 700\n\n\n\t\t\nTotal Amount\n\t\n\nRs. 700\n\nIf you would like to add a comment about your order, please write it in the field below.\nPlace Order\nSUBSCRIPTION\n \n\nGet the most recent updates from\nour site and be updated your self...\n\nCopyright © 2021 All rights reserved"
+    },
+    "urlAfterPlaceOrder": "https://automationexercise.com/payment",
+    "paymentPage": {
+      "fieldLocatorMatches": {
+        "name-on-card": {
+          "found": true,
+          "outerHTML": "<input class=\"form-control\" name=\"name_on_card\" data-qa=\"name-on-card\" required=\"\" type=\"text\">"
+        },
+        "card-number": {
+          "found": true,
+          "outerHTML": "<input name=\"card_number\" data-qa=\"card-number\" class=\"form-control card-number\" required=\"\" type=\"text\">"
+        },
+        "cvc": {
+          "found": true,
+          "outerHTML": "<input name=\"cvc\" data-qa=\"cvc\" class=\"form-control card-cvc\" required=\"\" placeholder=\"ex. 311\" type=\"text\">"
+        },
+        "expiry-month": {
+          "found": true,
+          "outerHTML": "<input class=\"form-control card-expiry-month\" name=\"expiry_month\" data-qa=\"expiry-month\" required=\"\" placeholder=\"MM\" type=\"text\">"
+        },
+        "expiry-year": {
+          "found": true,
+          "outerHTML": "<input name=\"expiry_year\" data-qa=\"expiry-year\" class=\"form-control card-expiry-year\" required=\"\" placeholder=\"YYYY\" type=\"text\">"
+        },
+        "pay-button": {
+          "found": true,
+          "outerHTML": "<button class=\"form-control btn btn-primary submit-button\" data-qa=\"pay-button\" id=\"submit\" type=\"submit\">Pay and Confirm Order</button>"
+        }
+      }
+    },
+    "urlAfterPayment": "https://automationexercise.com/payment_done/700",
+    "confirmationHeadingText": "Order Placed!",
+    "confirmationBodyTextSnippet": " Home\n Products\n Cart\n Logout\n Delete Account\n Test Cases\n API Testing\n Video Tutorials\n Contact us\n Logged in as POM Tester 1785087335031\nORDER PLACED!\n\nCongratulations! Your order has been confirmed!\n\nDownload Invoice\nContinue\nSUBSCRIPTION\n \n\nGet the most recent updates from\nour site and be updated your self...\n\nCopyright © 2021 All rights reserved",
+    "conclusion": "CheckoutPage.ts and PaymentPage.ts locators all matched real elements - see the found:true/outerHTML entries above for exact confirmation, no forcing was needed."
+  },
+  "TC-CHECKOUT-002": {
+    "objective": "Verify checkout cannot be reached/completed with an empty cart, via UI and via direct URL",
+    "uiPath": {
+      "description": "Navigated to /view_cart with nothing added",
+      "bodyTextSnippet": " Home\n Products\n Cart\n Logout\n Delete Account\n Test Cases\n API Testing\n Video Tutorials\n Contact us\n Logged in as POM Tester 1785087343426\nHome Shopping Cart\n\n\n\nCart is empty! Click here to buy products.\n\n\n\nSUBSCRIPTION\n \n\nGet the most recent updates from\nour site and be updated your self...\n\nCopyright © 2021 All rights reserved",
+      "checkoutButtonFound": false,
+      "conclusion": "No \"Proceed to Checkout\" control exists at all when the cart is empty - not disabled, entirely absent from the DOM."
+    },
+    "directUrlPath": {
+      "description": "page.goto(\"/checkout\") on a fresh page, same logged-in context, empty cart",
+      "url": "https://automationexercise.com/checkout",
+      "httpStatus": 200,
+      "bodyTextSnippet": " Home\n Products\n Cart\n Logout\n Delete Account\n Test Cases\n API Testing\n Video Tutorials\n Contact us\n Logged in as POM Tester 1785087343426\nHome Checkout\nAddress Details\nYOUR DELIVERY ADDRESS\n. POM Tester\nTest Street 1\nPraha Praha 10000\nIndia\n123456789\nYOUR BILLING ADDRESS\n. POM Tester\nTest Street 1\nPraha Praha 10000\nIndia\n123456789\nReview Your Order\nItem\tDescription\tPrice\tQuantity\tTotal\t\n\t\t\nTotal Amount\n\t\n\nRs. 0\n\nIf you would like to add a comment about your order, please write it in the field below.\nPlace Order\nSUBSCRIPTION\n \n\nGet the most recent updates from\nour site and be updated your sel",
+      "placeOrderLinkFound": true,
+      "conclusion": "Direct navigation to /checkout with an empty cart does NOT block the flow: the page renders normally (address details, Rs. 0 order total) and \"Place Order\" is present and presumably clickable - no \"cart is empty\" message shown at all. This is the same shape of issue as BUG-002 (session-drop silent empty checkout)."
+    }
+  },
+  "TC-CHECKOUT-003": {
+    "objective": "Find any order history / account page reachable from the nav after a completed order, without guessing a URL",
+    "urlAfterCompletingOrder": "https://automationexercise.com/payment_done/700",
+    "allNavLinksAfterOrder": [
+      {
+        "text": "Home",
+        "href": "/"
+      },
+      {
+        "text": " Products",
+        "href": "/products"
+      },
+      {
+        "text": "Cart",
+        "href": "/view_cart"
+      },
+      {
+        "text": "Logout",
+        "href": "/logout"
+      },
+      {
+        "text": "Delete Account",
+        "href": "/delete_account"
+      },
+      {
+        "text": "Test Cases",
+        "href": "/test_cases"
+      },
+      {
+        "text": "API Testing",
+        "href": "/api_list"
+      },
+      {
+        "text": "Video Tutorials",
+        "href": "https://www.youtube.com/c/AutomationExercise"
+      },
+      {
+        "text": "Contact us",
+        "href": "/contact_us"
+      },
+      {
+        "text": "Logged in as POM Tester 1785087347550",
+        "href": null
+      },
+      {
+        "text": "Download Invoice",
+        "href": "/download_invoice/700"
+      },
+      {
+        "text": "Continue",
+        "href": "/"
+      }
+    ],
+    "orderHistoryLikeCandidates": [
+      {
+        "text": "Delete Account",
+        "href": "/delete_account"
+      }
+    ],
+    "conclusion": "See orderHistoryLikeCandidates for plausible order-history/account links to investigate further."
+  },
+  "TC-CHECKOUT-005": {
+    "objective": "Does double-clicking the actual order-creating control (Payment page's \"Pay and Confirm Order\" button) create a duplicate order, checked at the network level rather than only via end-state UI",
+    "note": "Deviated from testing \"Place Order\" literally: that control is a plain navigation link (<a href=\"/payment\">), not a submit action, so it cannot itself create a duplicate order. The real order-creating step is the Payment page's data-qa=\"pay-button\", inside a <form method=\"POST\" action=\"/payment\"> - tested here instead.",
+    "urlFilterUsed": "/payment|order|checkout/i",
+    "networkEvents": [
+      {
+        "seq": 1,
+        "type": "request",
+        "method": "POST",
+        "url": "https://automationexercise.com/payment",
+        "postData": "csrfmiddlewaretoken=EcyrMJ5Ln37YGPDhNlDThGwNSZz4TGn1iTqkbgGLROx9jQX1DBL2SfKfMcVH1v0b&name_on_card=Test+User&card_number=4111111111111111&cvc=123&expiry_month=12&expiry_year=2030"
+      },
+      {
+        "seq": 2,
+        "type": "response",
+        "method": "POST",
+        "url": "https://automationexercise.com/payment",
+        "status": 302,
+        "bodyText": "<error reading response body: response.text: Response body is unavailable for redirect responses>"
+      },
+      {
+        "seq": 3,
+        "type": "request",
+        "method": "GET",
+        "url": "https://automationexercise.com/payment_done/700",
+        "postData": null
+      },
+      {
+        "seq": 4,
+        "type": "response",
+        "method": "GET",
+        "url": "https://automationexercise.com/payment_done/700",
+        "status": 200,
+        "bodyText": "<!DOCTYPE html>\n<html lang=\"en\">\n<head>\n   <meta charset=\"utf-8\">\n    <meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\">\n    <meta name=\"description\" content=\"This is for automation practice\">\n\t<meta name=\"robots\" content=\"index\"/>\n\t<meta name=\"keywords\" content=\"Automation Exercise / Automation Practice / Practice website for automation / demo website for practice / dummy website for testing / testing website / dummy website for practice automation / API Testing / API automa...[truncated, 5574 chars total]"
+      }
+    ],
+    "finalUrl": "https://automationexercise.com/payment_done/700",
+    "postPaymentPostRequestCount": 1,
+    "conclusion": "Only one POST /payment request was captured despite two synchronous clicks - the second click did not result in a second submission at the network level."
+  },
+  "TC-CHECKOUT-006": {
+    "objective": "Does reloading the order confirmation page fire any order-creating request again?",
+    "confirmationUrl": "https://automationexercise.com/payment_done/700",
+    "networkEventsOnReload": [
+      {
+        "seq": 1,
+        "type": "request",
+        "method": "GET",
+        "url": "https://automationexercise.com/payment_done/700",
+        "postData": null
+      },
+      {
+        "seq": 2,
+        "type": "response",
+        "method": "GET",
+        "url": "https://automationexercise.com/payment_done/700",
+        "status": 200,
+        "bodyText": "<!DOCTYPE html>\n<html lang=\"en\">\n<head>\n   <meta charset=\"utf-8\">\n    <meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\">\n    <meta name=\"description\" content=\"This is for automation practice\">\n\t<meta name=\"robots\" content=\"index\"/>\n\t<meta name=\"keywords\" content=\"Automation Exercise / Automation Practice / Practice website for automation / demo website for practice / dummy website for testing / testing website / dummy website for practice automation / API Testing / API automa...[truncated, 5574 chars total]"
+      }
+    ],
+    "anyPostRequestOnReload": false,
+    "conclusion": "No POST request fired on reload - the confirmation URL (https://automationexercise.com/payment_done/700) already bakes the order id into the path, and reloading is just a GET/display, inherently safe from resubmission."
+  }
+}

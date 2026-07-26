@@ -162,6 +162,28 @@ not part of the committed suite).
   Fit Jeans, Premium Polo T-Shirts), not an intersection and not scoped to Men Tshirts. The
   test case was rewritten to document this instead of asserting an intersection that isn't
   reachable through the UI.
+
+## Checkout module (Playwright exploration, 2026-07-26)
+
+- **TC-CHECKOUT-001:** `CheckoutPage.ts`/`PaymentPage.ts` locators (written speculatively in
+  an earlier session, never run) all matched the real site with no changes needed. Confirmed
+  exact confirmation text: heading "Order Placed!", message "Congratulations! Your order has
+  been confirmed!", at `/payment_done/{orderId}`.
+- **TC-CHECKOUT-002 / BUG-003:** `/view_cart` correctly shows "Cart is empty!" with no
+  checkout control when empty, but **direct navigation to `/checkout` bypasses this** — page
+  renders normally with Rs. 0 and a working "Place Order". Same shape as BUG-002, different
+  trigger (no session drop needed, just an empty cart). See
+  `docs/bug-reports/empty-cart-checkout-direct-url.md`.
+- **TC-CHECKOUT-003:** no order-history/account page exists anywhere in the nav after a
+  completed order — confirmed by listing every nav link, not by guessing a URL. Test case
+  rewritten to document the absence.
+- **TC-CHECKOUT-005:** "Place Order" is a plain `<a href="/payment">`, not a submit control —
+  cannot itself cause a duplicate order. The real risk is the Payment page's `pay-button`
+  (`POST /payment`). Two synchronous clicks there produced exactly one `POST /payment` in the
+  network trace — no duplicate order in this trial.
+- **TC-CHECKOUT-006:** reloading the confirmation page (`/payment_done/{orderId}`) fires no
+  POST at all — order id is baked into the URL path, reload is inherently safe.
+  Raw data: `docs/exploration/findings-checkout.json`.
 - **TC-SEARCH-005 correction:** the pre-existing "Confirmed" note for this test case (filter
   lost on reload) did not hold up. Category filtering is a URL-addressed page
   (`/category_products/{id}`), so F5 correctly shows the same category again — there's no
