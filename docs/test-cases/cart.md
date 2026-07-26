@@ -1,27 +1,46 @@
 # Test Cases — Cart
 
-## TC-CART-001 — Count/price consistency between header and cart page
+## TC-CART-001 — No header cart count/price badge exists
 
-- **Objective:** Verify the cart badge and the cart page always agree on count and total.
+- **Objective:** Document that there is no header badge to cross-check against the cart page,
+  since the original premise of this test case doesn't hold on this site.
 - **Risk:** R-15
-- **Preconditions:** Empty cart.
-- **Data:** 2–3 products with known prices.
-- **Steps:** Add products to the cart. Record the count/total shown in the header badge.
-  Open `/view_cart`. Compare count and total.
-- **Expected Result:** Header and cart page show identical count and total.
-- **Tags:** `@functional` `@critical` `@cart`
+- **Preconditions:** —
+- **Data:** 2 different products.
+- **Steps:** Add two different products to the cart. Inspect the nav bar's "Cart" link and
+  the rest of the header for any element showing a count or price.
+- **Expected Result:** **Confirmed (2026-07-26, Playwright exploration — see
+  `docs/exploration/findings-cart.json`):** the nav "Cart" link is just an icon + the word
+  "Cart" (`<a href="/view_cart"><i class="fa fa-shopping-cart"></i> Cart</a>`) — no dynamic
+  count or price anywhere. A full scan of the header for any element containing a bare number
+  or an "Rs. n" price found nothing. There is no header badge to compare the cart page
+  against; the original version of this test case assumed a UI element that doesn't exist,
+  same as TC-SEARCH-003's original assumption about combined filters. This test now documents
+  that absence instead.
+- **Tags:** `@edge-case` `@low` `@cart`
 
 ## TC-CART-002 — Adding the same item twice
 
-- **Objective:** Document what happens when the same product is added to the cart twice.
+- **Objective:** Verify that adding the same product twice via "Add to cart" correctly
+  increments its quantity.
 - **Risk:** R-16
 - **Preconditions:** Product already in the cart (qty 1).
 - **Data:** Same product.
 - **Steps:** Add the same product again from the product page.
-- **Expected Result:** **Confirmed:** quantity stays at 1 — repeated "Add to cart" clicks do
-  not increment quantity. Quantity can only be set on the product page *before* adding; it is
-  not editable afterwards on the cart or checkout page. This is a candidate defect — see
-  the bug report in `docs/bug-reports/`.
+- **Expected Result:** Quantity becomes 2.
+  **Confirmed (2026-07-26, network-level trace — see
+  `docs/exploration/findings-cart-002-network.json`):** both "Add to cart" clicks
+  independently fire `GET /add_to_cart/{id}?quantity=1`, both return HTTP 200
+  `"Added To Cart"`, and the resulting quantity is 2 — the endpoint is additive, not
+  idempotent, and behaves the way a user would expect.
+  
+  **History:** this test case previously documented the opposite (quantity stuck at 1) as a
+  confirmed candidate defect, BUG-001. That finding did not hold up under repeated
+  re-testing and a network-level trace, and BUG-001 has been retracted — see
+  `docs/bug-reports/cart-duplicate-add-quantity.md` and `docs/automation-notes.md` for the
+  full investigation. The original manual finding most likely came from a click that never
+  reached the server (the same category of ad/overlay interference that repeatedly disrupted
+  manual browser testing on 2026-07-26), not a real dedup on the backend.
 - **Tags:** `@functional` `@medium` `@cart`
 
 ## TC-CART-003 — Cart persistence after logout and re-login
@@ -42,6 +61,8 @@
 - **Preconditions:** Product in the cart.
 - **Steps:** Reload `/view_cart` (F5).
 - **Expected Result:** Cart contents (count, price) remain unchanged after the reload.
+  **Confirmed (2026-07-26, Playwright exploration):** quantity, price, and total for the row
+  were byte-identical before and after reload.
 - **Tags:** `@functional` `@medium` `@cart`
 
 ## TC-CART-005 — Remove item from cart
@@ -53,4 +74,11 @@
 - **Steps:** Remove one item from the cart page.
 - **Expected Result:** The removed item disappears from the cart; header count and total
   update to reflect only the remaining item(s); the total is recalculated correctly.
+  **Confirmed (2026-07-26, Playwright exploration — see `docs/exploration/findings-cart.json`):**
+  removing one row leaves the other row's own quantity/price/total untouched. There is **no
+  cart-wide grand total element anywhere on `/view_cart`** — a full page scan for any
+  `class`/`id` containing "total" outside `#cart_info_table` found nothing, consistent with
+  TC-CART-001's finding that the header has no count/price badge either. "Total is
+  recalculated correctly" only applies to each row's own `.cart_total` cell — there's no
+  running/grand total to check against.
 - **Tags:** `@functional` `@medium` `@cart`

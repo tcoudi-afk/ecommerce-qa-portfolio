@@ -135,6 +135,25 @@ not part of the committed suite).
   explicit "no results" message anywhere on the page (checked the full body text against
   `no product|not found|no result`, case-insensitive — no match). Test should assert product
   count = 0, not the presence of a message that doesn't exist.
+- **TC-CART-001/005:** no cart-wide count/price display exists anywhere — not in the header
+  (just an icon + "Cart" text) and not on `/view_cart` either (no grand-total element outside
+  each row's own `.cart_total`). Both test cases were rewritten/adjusted to stop assuming a
+  UI element this site doesn't have.
+- **TC-CART-002 (resolved 2026-07-26, network-level trace):** re-tested the existing
+  BUG-001 finding (quantity stays at 1) repeatedly through the day with inconsistent results
+  (6 of 9 total observations showed quantity 2, not 1). A network-level trace
+  (`docs/exploration/findings-cart-002-network.json`) settled it: both "Add to cart" clicks
+  independently fired `GET /add_to_cart/{id}?quantity=1`, both returned HTTP 200
+  `"Added To Cart"`, and the result was quantity 2 — no dropped request, no error. **BUG-001
+  has been retracted** (`docs/bug-reports/cart-duplicate-add-quantity.md`) — the endpoint is
+  additive and correct; the original 2026-07-22 manual finding most likely came from a click
+  that never reached the server (same category as the ad/CMP overlay interference that
+  repeatedly derailed manual browser testing today), not a real dedup on the backend.
+- **TC-CART-004:** cart quantity/price/total confirmed byte-identical before and after a page
+  reload.
+  Raw data for all of the above: `docs/exploration/findings-cart.json` and
+  `docs/exploration/findings-cart-002-network.json` (kept on disk per new standing rule —
+  exploration JSON output is archived, not deleted; see CLAUDE.md).
 - **TC-SEARCH-003:** category and brand are non-combinable, independent views — not a
   narrowing filter pair. The brand sidebar link on a category page always points to
   `/brand_products/{name}`, dropping the category entirely. Verified: `/category_products/3`

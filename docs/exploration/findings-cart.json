@@ -1,0 +1,88 @@
+{
+  "TC-CART-001": {
+    "objective": "Whether the header shows a dynamic cart count/price badge, per TC-CART-001 as written",
+    "navCartLinkOuterHTML": "<a href=\"/view_cart\"><i class=\"fa fa-shopping-cart\"></i> Cart</a>",
+    "navCartWrapperOuterHTML": "<li><a href=\"/view_cart\"><i class=\"fa fa-shopping-cart\"></i> Cart</a></li>",
+    "navCartLinkText": "Cart",
+    "headerCountCandidates": [],
+    "conclusion": "no dynamic count/price badge found anywhere in the header - TC-CART-001 as written (compare header badge to cart page) is not testable as designed"
+  },
+  "TC-CART-002": {
+    "objective": "Whether HOW the same product is added twice changes the resulting quantity",
+    "scenarioA_detailPage_sequentialWithModalDismissed": {
+      "description": "product_details/1, \"Add to cart\" clicked twice, \"Continue Shopping\" dismissed between clicks (reconfirms BUG-001)",
+      "cartRows": [
+        {
+          "rowId": "product-1",
+          "price": "Rs. 500",
+          "quantity": "2",
+          "total": "Rs. 1000"
+        }
+      ]
+    },
+    "scenarioB_listingPage_bothDuplicateElements_noModalDismiss": {
+      "description": "products listing, .productinfo and .product-overlay \"Add to cart\" for the same product clicked back-to-back, without dismissing the modal in between",
+      "cartRows": [
+        {
+          "rowId": "product-1",
+          "price": "Rs. 500",
+          "quantity": "1",
+          "total": "Rs. 500"
+        }
+      ]
+    }
+  },
+  "TC-CART-004": {
+    "objective": "Whether cart quantity/price survive a page reload",
+    "beforeReload": [
+      {
+        "rowId": "product-1",
+        "price": "Rs. 500",
+        "quantity": "2",
+        "total": "Rs. 1000"
+      }
+    ],
+    "afterReload": [
+      {
+        "rowId": "product-1",
+        "price": "Rs. 500",
+        "quantity": "2",
+        "total": "Rs. 1000"
+      }
+    ],
+    "unchanged": true
+  },
+  "TC-CART-005": {
+    "objective": "Whether removing one of two items updates the cart correctly, and whether any cart-wide total display exists on the page at all",
+    "beforeDelete": [
+      {
+        "rowId": "product-1",
+        "price": "Rs. 500",
+        "quantity": "1",
+        "total": "Rs. 500"
+      },
+      {
+        "rowId": "product-2",
+        "price": "Rs. 400",
+        "quantity": "1",
+        "total": "Rs. 400"
+      }
+    ],
+    "afterDelete": [
+      {
+        "rowId": "product-2",
+        "price": "Rs. 400",
+        "quantity": "1",
+        "total": "Rs. 400"
+      }
+    ],
+    "remainingRowUnchanged": true,
+    "grandTotalElementsOutsideCartTable": [],
+    "conclusion": "no cart-wide total element found outside the per-row .cart_total cells"
+  },
+  "adBlockSanityCheck": {
+    "objective": "Confirm blocking the ad domains keeps #google_vignette from ever appearing in page.url()",
+    "vignetteDetected": false,
+    "urls": []
+  }
+}

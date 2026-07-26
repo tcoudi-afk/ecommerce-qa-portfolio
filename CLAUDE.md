@@ -70,3 +70,19 @@ wishlist, review systém.
   uživatele (viz přístup výše) – zatím jednoduchý mód, review dělá uživatel
 - Neukládat žádné citlivé údaje (hesla, tokeny) natvrdo v kódu, i když jde
   o demo web
+
+## Explorační skripty (throwaway probe testy)
+
+Pro zjištění živého chování appky (ne pro finální test suite) se používá vzor
+`playwright/tests/_explore-<jmeno>.spec.ts` — throwaway soubor, který zapíše
+zjištění do `docs/exploration/findings-<jmeno>.json`.
+
+- **Throwaway spec soubor (`_explore-*.spec.ts`) se po úspěšném běhu maže** —
+  není součástí committované sady a nemá běžet v CI.
+- **Výstupní JSON soubor (`docs/exploration/findings-*.json`) se NEmaže.**
+  Zůstává na disku jako archivovaná evidence vedle `docs/automation-notes.md`
+  (rozhodnutí o selektorech, chování appky atd. se mají dat zpětně dohledat).
+- Při hlášení výsledků zpět: shrnutí v textu musí přesně odpovídat obsahu
+  JSON souboru. Pokud nějaký scénář vypadá nekonzistentně nebo proti
+  očekávání, napš to tak, jak to je, nedovysvětlovat/nezaokrouhlovat to na
+  „očekávaný“ výsledek.
