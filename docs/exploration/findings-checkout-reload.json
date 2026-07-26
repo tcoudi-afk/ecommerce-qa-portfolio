@@ -1,0 +1,13 @@
+{
+  "date": "2026-07-26",
+  "question": "Does reloading the order confirmation page (/payment_done/{id}) create a duplicate order? (R-25 / TC-CHECKOUT-006)",
+  "context": "CI consistently failed (3/3: original + 2 retries) on `expect(postRequestFiredOnReload).toBe(false)`. That assertion only checked whether *any* POST to a URL containing 'automationexercise.com' fired on reload - an implementation detail, not the actual business outcome.",
+  "method": "Standalone Playwright probe run directly against the live site (not via CI), instrumenting both the original payment POST and any POST fired during page.reload(), capturing status code, response body, and the order id in the URL before/after reload.",
+  "runs": [
+    { "run": 1, "originalOrderId": "500", "postFiredOnReload": true, "postUrl": "https://automationexercise.com/cdn-cgi/rum?", "postStatus": 204, "orderIdAfterReload": "500", "sameOrderId": true },
+    { "run": 2, "originalOrderId": "500", "postFiredOnReload": true, "postUrl": "https://automationexercise.com/cdn-cgi/rum?", "postStatus": 204, "orderIdAfterReload": "500", "sameOrderId": true },
+    { "run": 3, "originalOrderId": "500", "postFiredOnReload": true, "postUrl": "https://automationexercise.com/cdn-cgi/rum?", "postStatus": 204, "orderIdAfterReload": "500", "sameOrderId": true }
+  ],
+  "finding": "The POST that fires on reload is Cloudflare's Real User Monitoring (RUM) beacon at /cdn-cgi/rum - injected by the CDN in front of the site, same-origin, returns 204, unrelated to order logic. It is not a form resubmission. The order id in the URL is identical before and after reload across all 3 runs - no duplicate order is created. R-25 is NOT confirmed as a defect for this scenario.",
+  "implication_for_test": "TC-CHECKOUT-006's assertion was scoped to req.url().includes('automationexercise.com'), which correctly stopped matching a prior false positive (pagead2.googlesyndication.com) but started matching this same-origin CDN beacon instead. Fixed to assert on the actual business outcome (order id stability across reload) instead of 'did any POST fire'."
+}

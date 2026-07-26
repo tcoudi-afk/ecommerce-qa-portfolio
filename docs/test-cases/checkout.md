@@ -89,8 +89,12 @@
 - **Steps:** Reload the confirmation page (F5).
 - **Expected Result:** No duplicate order is created; order history still shows exactly one
   order.
-  **Confirmed (2026-07-26, Playwright exploration — see `docs/exploration/findings-checkout.json`):**
-  no POST request fired on reload at all — the confirmation URL
-  (`/payment_done/{orderId}`) already bakes the order id into the path, so a reload is just a
-  GET/display, inherently safe from resubmission.
+  **Confirmed (2026-07-26, manual probe — see
+  `docs/exploration/findings-checkout-reload.json`):** a POST *does* fire on reload, but it's
+  Cloudflare's Real User Monitoring beacon (`/cdn-cgi/rum`), injected by the CDN in front of
+  the site — not a form resubmission. The order id in the confirmation URL
+  (`/payment_done/{orderId}`) is identical before and after reload across 3/3 trials: no
+  duplicate order is created. Earlier test versions asserted "no POST fires" as a proxy for
+  "no duplicate order" — that proxy broke when the CDN's own same-origin beacon matched the
+  same domain check. The test now asserts on the order id directly.
 - **Tags:** `@edge-case` `@high` `@checkout`
