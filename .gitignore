@@ -1,0 +1,6 @@
+node_modules/
+playwright/test-results/
+playwright/playwright-report/
+postman/newman-report.xml
+.claude/settings.local.json
+.DS_Store

@@ -7,6 +7,55 @@ on:
     branches: [main]
 
 jobs:
+  ui-tests:
+    name: UI tests (Playwright)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Install dependencies
+        working-directory: playwright
+        run: npm ci
+
+      - name: Install Playwright browsers
+        working-directory: playwright
+        run: npx playwright install --with-deps chromium
+
+      # Same reasoning as the API job's health check - this is a shared,
+      # no-SLA demo environment (docs/automation-notes.md), so skip rather
+      # than fail the build outright if it's unreachable.
+      - name: Health check (environment availability)
+        id: health_check
+        run: |
+          STATUS=$(curl -s -o /dev/null -w "%{http_code}" https://automationexercise.com/)
+          if [ "$STATUS" != "200" ]; then
+            echo "Application is unreachable (HTTP $STATUS). Skipping the rest of the suite."
+            echo "skip=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "skip=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      # playwright.config.ts already sets retries: 2 in CI for individual
+      # test flakiness (isCI check) - no separate outer retry loop needed
+      # here, unlike the Newman job's whole-collection retry.
+      - name: Run Playwright tests
+        if: steps.health_check.outputs.skip == 'false'
+        working-directory: playwright
+        run: npx playwright test --project=chromium --reporter=list,html
+
+      - name: Upload Playwright report
+        if: always() && steps.health_check.outputs.skip == 'false'
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-report
+          path: playwright/playwright-report/
+          retention-days: 14
+
   api-tests:
     name: API tests (Postman/Newman)
     runs-on: ubuntu-latest
