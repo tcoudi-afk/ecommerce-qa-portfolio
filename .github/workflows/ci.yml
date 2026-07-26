@@ -18,6 +18,14 @@ jobs:
         with:
           node-version: 22
 
+      # Fast, no-dependency check that runs before the slower browser
+      # install/test steps below - fails early if a documented test case
+      # (docs/test-cases/*.md) has no matching Playwright test, or if a
+      # Playwright test references a TC-ID with no matching doc entry.
+      # No npm install needed - plain Node, no dependencies.
+      - name: Check Playwright automation status vs documentation
+        run: node scripts/automation-status.js --check
+
       - name: Install dependencies
         working-directory: playwright
         run: npm ci

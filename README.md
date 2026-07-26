@@ -1,6 +1,6 @@
 # E-commerce QA Portfolio
 
-![CI](https://github.com/<tvuj-github-username>/ecommerce-qa-portfolio/actions/workflows/ci.yml/badge.svg)
+![CI](https://github.com/tcoudi-afk/ecommerce-qa-portfolio/actions/workflows/ci.yml/badge.svg)
 
 ## O projektu
 
@@ -99,13 +99,24 @@ včetně syrového Newman JSON reportu v `docs/evidence/`.
 ```
 ecommerce-qa-portfolio/
 ├── docs/
-│   ├── test-strategy.md       # testovací strategie a přístup
-│   ├── test-cases/            # testovací scénáře a test case po modulech
-│   ├── test-run-evidence.md   # evidence opakovatelnosti (Postman Runner + Newman CLI)
-│   └── evidence/               # syrové reporty k evidenci (např. Newman JSON)
-├── postman/                   # API kolekce a prostředí
-├── playwright/                # UI automatizace (testy + Page Object Model)
-└── .github/workflows/         # CI pipeline
+│   ├── test-strategy.md        # testovací strategie a přístup
+│   ├── risk-analysis.md        # risk-based analýza (Impact × Likelihood → Priority)
+│   ├── coverage-matrix.md      # mapování risk → test case, 39/39 rizik pokryto
+│   ├── automation-notes.md     # implementační rozhodnutí (test data, asserty, parametrizace)
+│   ├── automation-status.md    # generováno scripts/automation-status.js - stav automatizace vs. dokumentace
+│   ├── tests-not-automated.md  # scénáře záměrně nepokryté automatizací, s důvodem
+│   ├── test-cases/             # testovací scénáře a test case po modulech
+│   ├── bug-reports/            # nahlášené (i zpětně retrahované) defekty s plnou historií
+│   ├── exploration/            # zjištění z throwaway probe skriptů (viz docs/automation-notes.md)
+│   ├── evidence/                # syrové reporty k evidenci (např. Newman JSON)
+│   └── test-run-evidence.md    # evidence opakovatelnosti (Postman Runner + Newman CLI)
+├── postman/                    # API kolekce a prostředí
+├── playwright/                 # UI automatizace
+│   ├── tests/                  # *.spec.ts testy po modulech
+│   ├── pages/                  # Page Object Model (+ pages/components/)
+│   └── fixtures/               # sdílené fixtures (blokace 3rd-party domén, registeredUser)
+├── scripts/                    # automation-status.js - cross-referencuje test-cases vs. Playwright
+└── .github/workflows/          # CI pipeline
 ```
 
 ## Jak spustit testy lokálně
