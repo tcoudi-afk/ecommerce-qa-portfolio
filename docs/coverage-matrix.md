@@ -44,5 +44,6 @@ Every risk from `docs/risk-analysis.md` mapped to the test case(s) covering it.
 | R-38 | Unexpected extra parameters | TC-API-016 |
 | R-39 | Empty body / invalid Content-Type | TC-API-004, TC-API-005 |
 
-**Coverage summary:** 39/39 risks have at least one mapped test case. 36 test cases total
-across 5 modules.
+**Coverage summary:** 39/39 risks have at least one mapped test case. 42 test cases total
+across 5 modules (26 UI: 10 registration/login, 5 search/filtering, 5 cart, 6 checkout;
+16 API).
